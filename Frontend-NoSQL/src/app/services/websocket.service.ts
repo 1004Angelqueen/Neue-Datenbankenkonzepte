@@ -1,33 +1,61 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
+import { retry } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
-export class WebsocketService {
-  private socket: WebSocket;
+export class WebsocketService implements OnDestroy {
+  private socket!: WebSocket;
+  private messageSubject = new Subject<any>();
 
   constructor() {
-    // Verbinde dich mit dem WebSocket-Endpunkt deines Backends
-    this.socket = new WebSocket('ws://localhost:3000/ws');
+    this.connectWebSocket();
   }
 
-  // Gibt einen Observable zurück, das alle empfangenen Nachrichten liefert
-  public getMessages(): Observable<any> {
-    return new Observable(observer => {
+  private connectWebSocket() {
+    try {
+      this.socket = new WebSocket('ws://localhost:3000/ws');
+      
+      this.socket.onopen = () => {
+        console.log('WebSocket Verbindung hergestellt');
+      };
+
       this.socket.onmessage = (event) => {
-        // Parsen der JSON-Daten
-        observer.next(JSON.parse(event.data));
+        try {
+          const data = JSON.parse(event.data);
+          console.log('WebSocket Nachricht empfangen:', data);
+          this.messageSubject.next(data);
+        } catch (error) {
+          console.error('Fehler beim Parsen der WebSocket-Nachricht:', error);
+        }
       };
 
       this.socket.onerror = (error) => {
-        observer.error(error);
+        console.error('WebSocket Fehler:', error);
       };
 
-      // Schließe den Observable, wenn die Verbindung geschlossen wird
       this.socket.onclose = () => {
-        observer.complete();
+        console.log('WebSocket Verbindung geschlossen');
+        // Automatische Wiederverbindung nach 3 Sekunden
+        setTimeout(() => this.connectWebSocket(), 3000);
       };
-    });
+    } catch (error) {
+      console.error('Fehler beim Aufbau der WebSocket-Verbindung:', error);
+      setTimeout(() => this.connectWebSocket(), 3000);
+    }
+  }
+
+  public getMessages(): Observable<any> {
+    return this.messageSubject.asObservable().pipe(
+      retry(3)
+    );
+  }
+
+  ngOnDestroy() {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.close();
+    }
+    this.messageSubject.complete();
   }
 }

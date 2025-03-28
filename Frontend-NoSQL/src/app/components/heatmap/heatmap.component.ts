@@ -1,8 +1,9 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.heat';
 import { WebsocketService } from '../../services/websocket.service';
+import { Subscription, interval } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -10,62 +11,90 @@ import { WebsocketService } from '../../services/websocket.service';
   templateUrl: './heatmap.component.html',
   styleUrls: ['./heatmap.component.css']
 })
-export class HeatmapComponent implements OnInit, AfterViewInit {
+export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private visitorData: any[] = [];
   private heatLayer: any;
-  private updateTimer: any = null;
+  private polygon: L.Polygon | null = null;  // Polygon-Referenz hinzugefügt
+  private wsSubscription?: Subscription;
+  private reloadSubscription?: Subscription;
 
-  constructor(private http: HttpClient, private wsService: WebsocketService) {}
+  constructor(
+    private http: HttpClient,
+    private wsService: WebsocketService,
+  ) {}
 
   ngOnInit(): void {
-    // Initialer Datenabruf (optional, falls du auch historische Daten laden willst)
-    this.http.get<any[]>('http://localhost:3000/api/heatmap').subscribe(
-      data => {
+    this.loadInitialData();
+    // Timer starten, der alle 5 Sekunden die Daten neu lädt
+    this.reloadSubscription = interval(5000).subscribe(() => {
+      this.loadInitialData();
+    });
+  }
+
+  private loadInitialData(): void {
+    this.http.get<any[]>('http://localhost:3000/api/heatmap').subscribe({
+      next: (data) => {
+        console.log('Neue Daten geladen:', data);
         this.visitorData = data;
-        this.addHeatmapLayer();
+        this.updateHeatmap();
       },
-      err => console.error('Fehler beim Abrufen der Heatmap-Daten', err)
-      
-    );
+      error: (err) => console.error('Fehler beim Laden der Daten:', err)
+    });
+  }
 
-    // Abonniere WebSocket-Nachrichten für Echtzeit-Updates
-    this.wsService.getMessages().subscribe(
-      data => {
-        console.log('WebSocket Update:', data);
-        // Aktualisiere visitorData und/oder füge den neuen Standort hinzu
-        this.visitorData.push(data);
-        // Aktualisiere den Heatmap-Layer: Entferne den alten Layer und füge einen neuen hinzu
-        if (this.heatLayer) {
-          this.map.removeLayer(this.heatLayer);
-        }
-        this.addHeatmapLayer();
-      },
-      err => console.error('WebSocket Fehler:', err)
-    );
+  private updateHeatmap(): void {
+    if (!this.map) return;
 
-     // WebSocket-Nachrichten abonnieren und throttlen
-     this.wsService.getMessages().subscribe(
-      data => {
-        console.log('WebSocket Update:', data);
-        this.visitorData.push(data);
-        // Wenn schon ein Timer läuft, tue nichts
-        if (this.updateTimer) return;
-        // Starte einen Timer, der nach 2 Sekunden den Layer aktualisiert
-        this.updateTimer = setTimeout(() => {
-          if (this.heatLayer) {
-            this.map.removeLayer(this.heatLayer);
+    // Existierenden Heatmap-Layer und Polygon entfernen
+    if (this.heatLayer) {
+      this.map.removeLayer(this.heatLayer);
+    }
+    if (this.polygon) {
+      this.map.removeLayer(this.polygon);
+    }
+
+    // Polygon-Punkte definieren
+    const polygonPoints: L.LatLngTuple[] = [
+      [48.6977, 10.28908],
+      [48.69803, 10.28953],
+      [48.69661, 10.29178],
+      [48.69611, 10.29117]
+    ];
+
+    // Neues Polygon erstellen und zur Karte hinzufügen
+    this.polygon = L.polygon(polygonPoints, {
+      color: 'red',
+      fillColor: 'orange',
+      fillOpacity: 0.2
+    }).addTo(this.map);
+
+    // Punkte für die Heatmap erstellen
+    if (this.visitorData && this.visitorData.length > 0) {
+      const points = this.visitorData
+        .map(visitor => {
+          if (visitor.location?.coordinates) {
+            return [
+              visitor.location.coordinates[1],
+              visitor.location.coordinates[0],
+              1
+            ];
           }
-          this.addHeatmapLayer();
-          this.updateTimer = null;
-        }, 2000);
-      },
-      err => console.error('WebSocket Fehler:', err)
-    );
+          return null;
+        })
+        .filter(point => point !== null);
+
+      // Neuen Heatmap-Layer erstellen
+      this.heatLayer = (L as any).heatLayer(points, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17
+      });
+      this.heatLayer.addTo(this.map);
+    }
   }
 
   ngAfterViewInit(): void {
-    // Initialisiere die Karte (hier kannst du deinen bevorzugten Tile-Layer verwenden)
     this.map = L.map('map').setView([48.6977, 10.28908], 16);
 
     L.tileLayer(
@@ -82,36 +111,13 @@ export class HeatmapComponent implements OnInit, AfterViewInit {
     ).addTo(this.map);
   }
 
-  addHeatmapLayer(): void {
-    // Zeichne das Polygon (Viereck) – optional, falls du den Bereich markieren willst
-    const polygonPoints: L.LatLngTuple[] = [
-      [48.6977, 10.28908],
-      [48.69803, 10.28953],
-      [48.69661, 10.29178],
-      [48.69611, 10.29117]
-    ];
-    L.polygon(polygonPoints, {
-      color: 'red',
-      fillColor: 'orange',
-      fillOpacity: 0.2
-    }).addTo(this.map);
-
-    // Wenn keine Besucherdaten vorhanden sind, überspringen
-    if (!this.visitorData || this.visitorData.length === 0) return;
-
-    // Erzeuge Punkte für die Heatmap
-    const points = this.visitorData.map(visitor => {
-      const lat = visitor.location.coordinates[1];
-      const lng = visitor.location.coordinates[0];
-      return [lat, lng, 1];
-    });
-
-    // Erzeuge den Heatmap-Layer
-    this.heatLayer = (L as any).heatLayer(points, {
-      radius: 25,
-      blur: 15,
-      maxZoom: 17
-    });
-    this.heatLayer.addTo(this.map);
+  ngOnDestroy() {
+    // Aufräumen
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+    }
+    if (this.reloadSubscription) {
+      this.reloadSubscription.unsubscribe();
+    }
   }
 }
