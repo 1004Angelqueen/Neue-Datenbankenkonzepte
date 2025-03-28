@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TrackingComponent } from './components/tracking/tracking.components';
+import { HeatmapComponent } from './components/heatmap/heatmap.component';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
@@ -12,7 +13,6 @@ import { RouterOutlet } from '@angular/router';
   imports: [
     CommonModule,
     TrackingComponent,
-    RouterOutlet
   ]
 })
 export class AppComponent {

@@ -1,7 +1,9 @@
 import Visitor from '../models/Visitor.js';
 
 export default async function (fastify, opts) {
-  // Endpoint zum Empfangen der Standortdaten
+  // Greife auf die WebSocket-Verbindungen zu, die im Options-Objekt übergeben wurden
+  const wsConnections = opts.websocketConnections || [];
+
   fastify.post('/track', async (request, reply) => {
     const { userId, role, latitude, longitude } = request.body;
 
@@ -9,8 +11,7 @@ export default async function (fastify, opts) {
       return reply.code(400).send({ error: 'Fehlende Daten' });
     }
 
-    // Update oder erstelle den Eintrag für diesen Benutzer
-    await Visitor.findOneAndUpdate(
+    const visitor = await Visitor.findOneAndUpdate(
       { userId },
       {
         userId,
@@ -24,6 +25,17 @@ export default async function (fastify, opts) {
       { upsert: true, new: true }
     );
 
+    // Sende den neuen Standort an alle WebSocket-Clients
+    const payload = JSON.stringify(visitor);
+    wsConnections.forEach(connection => {
+      connection.send(payload);
+    });
+
     reply.send({ success: true });
+  });
+
+  fastify.get('/heatmap', async (request, reply) => {
+    const all = await Visitor.find({});
+    reply.send(all);
   });
 }
