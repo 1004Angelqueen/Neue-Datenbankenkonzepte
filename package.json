@@ -9,6 +9,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "fastify": "^5.2.2"
+    "@angular/router": "^19.2.4",
+    "angular": "^1.6.10",
+    "fastify": "^5.2.2",
+    "mongoos": "^0.0.1-security",
+    "mongoose": "^8.13.0"
   }
 }
