@@ -112,6 +112,9 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
           '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
       }
     ).addTo(this.map);
+    
+    (window as any)['map'] = this.map;
+
       // Rufe die Methode zum Laden und Zeichnen der Zonen auf:
   this.loadZones();
   }
