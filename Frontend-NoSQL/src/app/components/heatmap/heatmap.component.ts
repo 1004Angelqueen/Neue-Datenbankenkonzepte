@@ -26,9 +26,12 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadInitialData();
+    this.loadZones();
     // Timer starten, der alle 5 Sekunden die Daten neu lädt
     this.reloadSubscription = interval(5000).subscribe(() => {
       this.loadInitialData();
+      this.loadZones();
+
     });
   }
 
@@ -109,7 +112,32 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
           '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
       }
     ).addTo(this.map);
+      // Rufe die Methode zum Laden und Zeichnen der Zonen auf:
+  this.loadZones();
   }
+// Füge oben noch den HttpClient für die Zones hinzu – der HttpClient ist bereits vorhanden
+loadZones(): void {
+  this.http.get<any[]>('http://localhost:3000/api/zones').subscribe(
+    zones => {
+      console.log('Geladene Zonen:', zones);
+      zones.forEach(zone => {
+        // Das Feld "area.coordinates" ist laut unserem Modell ein Array von Ringen.
+        // Wir gehen davon aus, dass du nur einen Ring pro Zone hast.
+        // GeoJSON-Koordinaten haben die Reihenfolge [lng, lat].
+        // Für Leaflet brauchen wir [lat, lng].
+        const polygonPoints: L.LatLngTuple[] = zone.area.coordinates[0].map((coord: number[]) => {
+          return [coord[1], coord[0]];
+        });
+        L.polygon(polygonPoints, {
+          color: 'blue',       // Rahmenfarbe der Zone
+          fillColor: 'blue',   // Füllfarbe der Zone
+          fillOpacity: 0.1     // Transparenz
+        }).addTo(this.map);
+      });
+    },
+    err => console.error('Fehler beim Laden der Zonen:', err)
+  );
+}
 
   ngOnDestroy() {
     // Aufräumen
