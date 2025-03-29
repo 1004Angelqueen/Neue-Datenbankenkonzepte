@@ -5,6 +5,8 @@
 
     <li><button (click)="logout()">Logout</button></li>
 
+    <li><button [routerLink]="['/incidents']">Incidents</button></li>
+
     <li>
       <!-- Hier wird die Notfall-Button-Komponente eingebunden -->
       <app-emergency-button></app-emergency-button>
