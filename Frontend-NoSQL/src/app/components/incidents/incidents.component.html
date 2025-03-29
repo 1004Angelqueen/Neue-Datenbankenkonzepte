@@ -1,0 +1,10 @@
+<!-- src/app/components/incidents/incidents.component.html -->
+<div class="incident-list">
+  <h2>Incidents</h2>
+  <ul>
+    <li *ngFor="let incident of incidents">
+      <strong>{{ incident.zone }}</strong>: {{ incident.message }}<br>
+      <small>{{ incident.createdAt | date:'short' }}</small>
+    </li>
+  </ul>
+</div>

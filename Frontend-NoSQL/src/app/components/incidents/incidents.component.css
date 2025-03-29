@@ -1,0 +1,13 @@
+.incident-list {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+  .incident-list ul {
+    list-style: none;
+    padding: 0;
+  }
+  .incident-list li {
+    margin-bottom: 1rem;
+  }
+  
