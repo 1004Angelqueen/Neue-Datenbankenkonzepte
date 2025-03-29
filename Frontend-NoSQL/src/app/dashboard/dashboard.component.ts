@@ -14,7 +14,6 @@ import { NotificationComponent } from '../components/notification/notification.c
       <h2>Dashboard</h2>
       <!-- Hier kannst du deine Karte oder Heatmap einbinden -->
       <app-heatmap></app-heatmap>
-      <app-incidents></app-incidents>
 
     </div>
   `,
@@ -23,6 +22,6 @@ import { NotificationComponent } from '../components/notification/notification.c
       padding: 1rem;
     }
   `],
-  imports: [CommonModule, NavigationComponent, HeatmapComponent,IncidentsComponent,]
+  imports: [CommonModule, NavigationComponent, HeatmapComponent,]
 })
 export class DashboardComponent {}
