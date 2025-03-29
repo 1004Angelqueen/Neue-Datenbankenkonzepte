@@ -2,13 +2,20 @@ import Fastify from 'fastify';
 import fastifyCors from '@fastify/cors';
 import fastifyWebsocket from '@fastify/websocket';
 import trackingRoutes from './routes/tracking.js';
+import fastifyJWT from '@fastify/jwt';
 import connectDB from './db.js';
 import zonesRoutes from './routes/zonesroute.js';
+import authRoutes from './routes/auths.js';
+
 const fastify = Fastify({ logger: true });
 
 // Verbindung zur Datenbank
 await connectDB();
 
+// Registriere fastify-jwt mit einem geheimen Schlüssel
+await fastify.register(fastifyJWT, {
+  secret: 'DEIN_GEHEIMER_SCHLÜSSEL' // Ersetze diesen Schlüssel mit einem sicheren, langen Schlüssel
+});
 // Registriere CORS (wie zuvor)
 await fastify.register(fastifyCors, {
   origin: 'http://localhost:4200',
@@ -39,7 +46,8 @@ fastify.get('/ws', { websocket: true }, (connection, req) => {
 // kannst du nach dem Speichern eines Standortes den neuen Standort an alle Clients senden:
 fastify.register(trackingRoutes, { prefix: '/api', websocketConnections: connections });
 fastify.register(zonesRoutes, { prefix: '/api' });
-
+// Registriere die Auth-Routen unter /api
+fastify.register(authRoutes, { prefix: '/api' });
 
 // Starte den Server
 fastify.listen({ port: 3000 }, err => {
