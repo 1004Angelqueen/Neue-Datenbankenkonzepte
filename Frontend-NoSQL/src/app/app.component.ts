@@ -11,13 +11,12 @@ import { Subscription } from 'rxjs';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  imports: [
-    CommonModule,
-    TrackingComponent,
-    HeatmapComponent
-  ]
+  imports: [CommonModule, RouterOutlet]
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent {
+  title = 'Frontend-NoSQL';
+}
+/*export class AppComponent implements OnInit, OnDestroy {
   title = 'Frontend-NoSQL';
   private wsSubscription?: Subscription;
   private reloadTimeout: any = null;
@@ -54,4 +53,4 @@ export class AppComponent implements OnInit, OnDestroy {
       clearTimeout(this.reloadTimeout);
     }
   }
-}
+}*/
