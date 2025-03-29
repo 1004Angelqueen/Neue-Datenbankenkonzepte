@@ -96,6 +96,47 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
       this.heatLayer.addTo(this.map);
     }
   }
+// NEU: Methode zum Hinzufügen farbiger Marker basierend auf der Rolle
+private addColoredMarkers(): void {
+  // Iteriere über alle Besucher und füge einen Marker mit farblicher Unterscheidung hinzu
+  this.visitorData.forEach(visitor => {
+    if (visitor.location?.coordinates) {
+      const lat = visitor.location.coordinates[1];
+      const lng = visitor.location.coordinates[0];
+      let color = 'blue'; // Standardfarbe für "Besucher"
+
+      // Anpassung der Farbe je nach Rolle
+      switch (visitor.role) {
+        case 'Eventveranstalter':
+          color = 'green';
+          break;
+        case 'Security':
+          color = 'red';
+          break;
+        case 'Vierte':
+          color = 'orange';
+          break;
+        case 'Besucher':
+        default:
+          color = 'blue';
+          break;
+      }
+
+      // Erstelle einen CircleMarker, der sich gut färben lässt
+      const marker = L.circleMarker([lat, lng], {
+        radius: 8,
+        fillColor: color,
+        color: '#000',
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+      }).addTo(this.map);
+
+      // Optionale Popup-Info
+      marker.bindPopup(`Rolle: ${visitor.role}`);
+    }
+  });
+}
 
   ngAfterViewInit(): void {
     this.map = L.map('map').setView([48.6977, 10.28908], 16);
