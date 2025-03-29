@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NavigationComponent } from '../components/Navigation/navigation.component';
 import { HeatmapComponent } from '../components/heatmap/heatmap.component';
 import { IncidentsComponent } from '../components/incidents/incidents.component';
+import { NotificationComponent } from '../components/notification/notification.component';
 
 @Component({
   standalone: true,
@@ -22,6 +23,6 @@ import { IncidentsComponent } from '../components/incidents/incidents.component'
       padding: 1rem;
     }
   `],
-  imports: [CommonModule, NavigationComponent, HeatmapComponent,IncidentsComponent]
+  imports: [CommonModule, NavigationComponent, HeatmapComponent,IncidentsComponent,]
 })
 export class DashboardComponent {}
