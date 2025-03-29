@@ -31,6 +31,7 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.reloadSubscription = interval(5000).subscribe(() => {
       this.loadInitialData();
       this.loadZones();
+      this.addColoredMarkers(); // Marker hinzufügen
 
     });
   }
