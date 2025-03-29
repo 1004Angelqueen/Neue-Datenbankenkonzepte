@@ -41,6 +41,11 @@ fastify.get('/ws', { websocket: true }, (connection, req) => {
   });
 });
 
+fastify.get('/', async (request, reply) => {
+  reply.send({ message: 'Willkommen bei der API!' });
+});
+
+
 
 // In deinen bestehenden Routen, z. B. im /api/track-Endpoint,
 // kannst du nach dem Speichern eines Standortes den neuen Standort an alle Clients senden:
