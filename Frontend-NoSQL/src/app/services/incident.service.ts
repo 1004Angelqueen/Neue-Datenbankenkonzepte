@@ -17,7 +17,13 @@ export class IncidentService {
 
   constructor(private http: HttpClient) {}
 
+  // Alle Incidents abrufen
   getIncidents(): Observable<Incident[]> {
     return this.http.get<Incident[]>(`${this.apiUrl}/incidents`);
+  }
+
+  // Incident anhand der _id löschen
+  deleteIncident(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/incidents/${id}`);
   }
 }

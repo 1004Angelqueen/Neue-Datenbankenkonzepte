@@ -14,4 +14,8 @@ export class EmergencyService {
   reportEmergency(incidentData: any): Observable<any> {
     return this.http.post(this.emergencyUrl, incidentData);
   }
+
+  deleteEmergency(incidentData: any): Observable<any> {
+    return this.http.delete(this.emergencyUrl, incidentData)
+  }
 }

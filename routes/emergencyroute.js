@@ -28,12 +28,31 @@ export default async function (fastify, opts) {
     }
   });
 
+
+  // GET-Route: Alle Incidents abrufen, evtl. mit Filter nach Zone
   fastify.get('/emergency', async (request, reply) => {
     try {
-      const emergencies = await Emergency.find({});
-      reply.send(emergencies);
+      // Optional: Filterung nach Zone, wenn ein Query-Parameter "zone" gesendet wird
+      const filter = request.query.zone ? { 'zone': request.query.zone } : {};
+      const incidents = await Emergency.find(filter);
+      reply.send(incidents);
     } catch (error) {
       fastify.log.error('Fehler beim Abrufen der Notfälle:', error);
+      reply.code(500).send({ error: 'Serverfehler' });
+    }
+  });
+
+  // DELETE-Route: Incident anhand der _id löschen
+  fastify.delete('/emergency/:id', async (request, reply) => {
+    const { id } = request.params;
+    try {
+      const result = await Emergency.findByIdAndDelete(id);
+      if (!result) {
+        return reply.code(404).send({ error: 'Notfall nicht gefunden' });
+      }
+      reply.send({ message: 'Notfall erfolgreich gelöscht', emergency: result });
+    } catch (error) {
+      fastify.log.error('Fehler beim Löschen der Notfallmeldung:', error);
       reply.code(500).send({ error: 'Serverfehler' });
     }
   });
