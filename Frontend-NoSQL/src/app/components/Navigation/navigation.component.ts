@@ -1,19 +1,14 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { EmergencyButtonComponent } from './../emergency-button/emergency-button.component'; 
 
 @Component({
   standalone: true,
   selector: 'app-navigation',
-  template: `
-    <nav class="nav-container">
-      <ul>
-        <li><a routerLink="/dashboard">Dashboard</a></li>
-        <li><button (click)="logout()">Logout</button></li>
-      </ul>
-    </nav>
-  `,
-  styleUrls: ['./navigation.component.css']
+  templateUrl: './navigation.component.html',
+  styleUrls: ['./navigation.component.css'],
+  imports: [EmergencyButtonComponent],
 })
 export class NavigationComponent {
   constructor(private authService: AuthService, private router: Router) {}

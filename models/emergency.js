@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const EmergencySchema = new mongoose.Schema({
   type: { type: String, required: true },
@@ -12,4 +12,4 @@ const EmergencySchema = new mongoose.Schema({
 // Geo-Index erstellen für raumbezogene Abfragen
 EmergencySchema.index({ location: '2dsphere' });
 
-module.exports = mongoose.model('Emergency', EmergencySchema);
+export default mongoose.model('Emergency', EmergencySchema);

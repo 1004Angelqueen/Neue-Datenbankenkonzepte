@@ -6,6 +6,7 @@ import fastifyJWT from '@fastify/jwt';
 import connectDB from './db.js';
 import zonesRoutes from './routes/zonesroute.js';
 import authRoutes from './routes/auths.js';
+import emergencyRoute from './routes/emergencyroute.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -53,6 +54,7 @@ fastify.register(trackingRoutes, { prefix: '/api', websocketConnections: connect
 fastify.register(zonesRoutes, { prefix: '/api' });
 // Registriere die Auth-Routen unter /api
 fastify.register(authRoutes, { prefix: '/api' });
+fastify.register(emergencyRoute, {prefix: '/api'});
 
 // Starte den Server
 fastify.listen({ port: 3000 }, err => {

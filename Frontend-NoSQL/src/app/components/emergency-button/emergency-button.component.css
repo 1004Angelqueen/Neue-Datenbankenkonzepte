@@ -1,0 +1,13 @@
+.red-button {
+    background-color: red;  /* Roter Hintergrund */
+    color: white;           /* Weißer Text */
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .red-button:hover {
+    background-color: darkred;
+  }
+  

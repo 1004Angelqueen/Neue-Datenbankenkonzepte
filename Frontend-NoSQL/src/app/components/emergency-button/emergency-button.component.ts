@@ -1,20 +1,15 @@
 import { Component } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
-// Falls du Leaflet verwendest, kannst du es entweder über npm installieren und importieren oder global einbinden
-// Beispiel: import * as L from 'leaflet'; 
-declare var L: any;  // falls Leaflet global eingebunden ist
+import { EmergencyService } from './emergency.service';
+declare var L: any;
 
 @Component({
   selector: 'app-emergency-button',
+  standalone: true,
   templateUrl: './emergency-button.component.html',
   styleUrls: ['./emergency-button.component.css']
 })
 export class EmergencyButtonComponent {
-  // Hier muss dein Karten-Objekt referenziert werden (z.B. wenn du eine Karte in einer anderen Komponente initialisierst)
-  // Für dieses Beispiel gehen wir davon aus, dass 'map' global verfügbar ist oder du es anderweitig injizierst.
-  
-  constructor(private http: HttpClient) {}
+  constructor(private emergencyService: EmergencyService) {}
 
   reportEmergency() {
     if (navigator.geolocation) {
@@ -25,13 +20,11 @@ export class EmergencyButtonComponent {
             lng: position.coords.longitude,
             timestamp: new Date().toISOString()
           };
-  
-          this.http.post('/api/emergency', incidentData)
+
+          this.emergencyService.reportEmergency(incidentData)
             .subscribe(
               (response: any) => {
-                // Hole die Karte über window
                 const map = (window as any)['map'];
-
                 if (!map) {
                   console.error("Kartenobjekt nicht gefunden!");
                   return;
@@ -53,4 +46,4 @@ export class EmergencyButtonComponent {
       alert("Geolocation wird von Ihrem Browser nicht unterstützt.");
     }
   }
-}  
+}

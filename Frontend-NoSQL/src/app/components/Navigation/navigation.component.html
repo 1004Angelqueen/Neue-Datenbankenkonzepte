@@ -1,8 +1,15 @@
 <nav class="nav-container">
-    <ul>
-      <li><a routerLink="/dashboard">Dashboard</a></li>
-      <!-- Weitere Navigationslinks können hier eingefügt werden -->
-      <li><button (click)="logout()">Logout</button></li>
-    </ul>
-  </nav>
+  <ul>
+    <li><a routerLink="/dashboard">Dashboard</a></li>
+    <!-- Weitere Navigationslinks -->
+
+    <li><button (click)="logout()">Logout</button></li>
+
+    <li>
+      <!-- Hier wird die Notfall-Button-Komponente eingebunden -->
+      <app-emergency-button></app-emergency-button>
+    </li>
+  </ul>
+</nav>
+
   
