@@ -52,12 +52,20 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
     const currentUserId = localStorage.getItem('userId') || '';
     
     if (role === 'eventveranstalter') {
+      // Eventveranstalter sieht alle Besucher
       return this.visitorData;
     } else if (role === 'security') {
+      // Security sieht nur Einträge mit Rolle "security" oder "visitor"
       return this.visitorData.filter(v =>
         v.role.toLowerCase() === 'security' || v.role.toLowerCase() === 'visitor'
       );
+    } else if (role === 'standbetreiber' || role === 'sanitäter') {
+      // Standbetreiber und Sanitäter sehen sich selbst und alle "visitor"
+      return this.visitorData.filter(v =>
+        v.userId === currentUserId || v.role.toLowerCase() === 'visitor'
+      );
     } else if (role === 'visitor') {
+      // Besucher sehen nur sich selbst
       return this.visitorData.filter(v => v.userId === currentUserId);
     }
     return [];
