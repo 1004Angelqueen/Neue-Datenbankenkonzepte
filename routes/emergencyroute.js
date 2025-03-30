@@ -1,48 +1,79 @@
-// routes/emergency.js
-import Emergency from '../models/Emergency.js';
+import Emergency from '../models/emergency.js';
+import Zone from '../models/Zone.js';
 
 export default async function (fastify, opts) {
-  fastify.post('/emergency', async (request, reply) => {
-    const { lat, lng, timestamp } = request.body;
+ // POST-Route zum Melden eines Notfalls
+fastify.post('/emergency', async (request, reply) => {
+  const { lat, lng, timestamp } = request.body;
+  
+  if (lat === undefined || lng === undefined || !timestamp) {
+    return reply.code(400).send({ error: 'Fehlende Daten' });
+  }
+  
+  try {
+    // Finde eine Zone, in der der Punkt liegt
+    const zone = await Zone.findOne({
+      area: {
+        $geoIntersects: {
+          $geometry: {
+            type: "Point",
+            coordinates: [lng, lat]
+          }
+        }
+      }
+    });
+    console.log("Gefundene Zone: ", zone);
+    
+    
+    // Erstelle das Emergency-Dokument inklusive der Zone (falls gefunden)
+    const newEmergency = new Emergency({
+      type: 'emergency',
+      location: { type: 'Point', coordinates: [lng, lat] },
+      timestamp: new Date(timestamp),
+      zone: zone ? zone.name : 'Unbekannt'  // Falls keine Zone gefunden wird, "Unbekannt"
+    });
+    
+    await newEmergency.save();
+    
+    reply.code(201).send({ message: 'Notfall gemeldet', emergency: newEmergency });
+  } catch (error) {
+    fastify.log.error('Fehler beim Speichern der Notfallmeldung:', error);
+    reply.code(500).send({ error: 'Serverfehler' });
+  }
+});
 
-    // Validierung der eingehenden Daten
-    if (lat === undefined || lng === undefined || !timestamp) {
-      return reply.code(400).send({ error: 'Fehlende Daten' });
-    }
 
-    try {
-      // Neue Notfallmeldung anlegen
-      const newEmergency = new Emergency({
-        type: 'emergency',
-        location: { type: 'Point', coordinates: [lng, lat] },
-        timestamp: new Date(timestamp)
-      });
-
-      // In der Datenbank speichern
-      await newEmergency.save();
-
-      reply.code(201).send({ message: 'Notfall gemeldet', emergency: newEmergency });
-    } catch (error) {
-      fastify.log.error('Fehler beim Speichern der Notfallmeldung:', error);
-      reply.code(500).send({ error: 'Serverfehler' });
-    }
-  });
-
-
-  // GET-Route: Alle Incidents abrufen, evtl. mit Filter nach Zone
+  // GET-Route zum Abrufen aller Emergencys
   fastify.get('/emergency', async (request, reply) => {
     try {
-      // Optional: Filterung nach Zone, wenn ein Query-Parameter "zone" gesendet wird
-      const filter = request.query.zone ? { 'zone': request.query.zone } : {};
-      const incidents = await Emergency.find(filter);
-      reply.send(incidents);
+      // Nur Emergencys, die noch auf der Karte sichtbar sind, zurückliefern
+      const emergencies = await Emergency.find({ visibleOnMap: true });
+      reply.send(emergencies);
     } catch (error) {
       fastify.log.error('Fehler beim Abrufen der Notfälle:', error);
       reply.code(500).send({ error: 'Serverfehler' });
     }
   });
+  
+  fastify.patch('/emergency/:id/dismiss', async (request, reply) => {
+    const { id } = request.params;
+    try {
+      const emergency = await Emergency.findByIdAndUpdate(
+        id,
+        { visibleOnMap: false },
+        { new: true }
+      );
+      if (!emergency) {
+        return reply.code(404).send({ error: 'Notfall nicht gefunden' });
+      }
+      reply.send({ message: 'Notfall von der Karte entfernt', emergency });
+    } catch (error) {
+      fastify.log.error('Fehler beim Aktualisieren des Notfalls:', error);
+      reply.code(500).send({ error: 'Serverfehler' });
+    }
+  });
+  
 
-  // DELETE-Route: Incident anhand der _id löschen
   fastify.delete('/emergency/:id', async (request, reply) => {
     const { id } = request.params;
     try {
@@ -56,4 +87,5 @@ export default async function (fastify, opts) {
       reply.code(500).send({ error: 'Serverfehler' });
     }
   });
+  
 }

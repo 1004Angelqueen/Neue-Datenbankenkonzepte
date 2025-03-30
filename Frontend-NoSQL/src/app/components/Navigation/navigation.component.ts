@@ -3,24 +3,16 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { EmergencyButtonComponent } from '../emergency-button/emergency-button.component';
+import { MoveVisitorsComponent } from '../move-visitors/move-visitors.component';
+
 
 @Component({
   standalone: true,
   selector: 'app-navigation',
-  template: `
-    <nav class="nav-container">
-      <ul>
-        <li><a routerLink="/dashboard">Dashboard</a></li>
-        <!-- Zeige den Incidents-Link nur, wenn die Rolle nicht 'Besucher' ist -->
-        <li *ngIf="shouldShowIncidents()">
-          <button [routerLink]="['/incidents']">Incidents</button>
-        </li>
-        <li><button (click)="logout()">Logout</button></li>
-      </ul>
-    </nav>
-  `,
+  templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.css'],
-  imports: [RouterLink,CommonModule]
+  imports: [RouterLink,CommonModule, EmergencyButtonComponent, MoveVisitorsComponent]
 })
 export class NavigationComponent {
   // Rollen, die den Zugriff auf die Incidents erlauben

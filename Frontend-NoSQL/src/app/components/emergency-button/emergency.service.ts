@@ -18,4 +18,9 @@ export class EmergencyService {
   deleteEmergency(incidentData: any): Observable<any> {
     return this.http.delete(this.emergencyUrl, incidentData)
   }
+
+  dismissEmergency(id: string): Observable<any> {
+    return this.http.patch(`${this.emergencyUrl}/emergency/${id}/dismiss`, {});
+  }
+  
 }

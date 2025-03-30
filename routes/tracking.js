@@ -1,4 +1,3 @@
-// routes/tracking.js
 import Visitor from '../models/Visitor.js';
 import Zone from '../models/Zone.js';
 import Incident from '../models/Incident.js';
@@ -13,68 +12,81 @@ export default async function (fastify, opts) {
       return reply.code(400).send({ error: 'Fehlende Daten' });
     }
 
-    // Finde eine Zone, in der der Punkt liegt.
-    // GeoJSON-Koordinaten sind im Format [longitude, latitude].
-    const zone = await Zone.findOne({
-      area: {
-        $geoIntersects: {
-          $geometry: {
-            type: "Point",
-            coordinates: [longitude, latitude]
+    try {
+      // Finde eine Zone, in der der Punkt liegt.
+      // GeoJSON-Koordinaten sind im Format [longitude, latitude].
+      const zone = await Zone.findOne({
+        area: {
+          $geoIntersects: {
+            $geometry: {
+              type: "Point",
+              coordinates: [longitude, latitude]
+            }
           }
         }
-      }
-    });
+      });
 
-    // Falls eine Zone gefunden wurde, verwende deren Name, sonst null.
-    const zoneName = zone ? zone.name : null;
+      // Falls eine Zone gefunden wurde, verwende deren Name, ansonsten "Unbekannt"
+      const zoneName = zone ? zone.name : 'Unbekannt';
 
-    // Besucher-Dokument updaten oder erstellen, inklusive Zonen-Zuweisung
-    const visitor = await Visitor.findOneAndUpdate(
-      { userId },
-      {
-        userId,
-        role,
-        location: {
-          type: 'Point',
-          coordinates: [longitude, latitude]
-        },
-        zone: zoneName,
-        lastUpdated: new Date()
-      },
-      { upsert: true, new: true }
-    );
+      // Logge das Ergebnis der Zone-Abfrage
+      fastify.log.info('Gefundene Zone:', zoneName);
 
-    // Wenn eine Zone gefunden wurde und sie eine Kapazität hat, prüfe die Besucheranzahl
-    if (zone && zone.capacity) {
-      const count = await Visitor.countDocuments({ zone: zoneName });
-      if (count > zone.capacity) {
-        // Erzeuge einen Incident, falls überfüllt
-        const incident = new Incident({
+      // Besucher-Dokument updaten oder erstellen, inklusive Zonen-Zuweisung
+      const visitor = await Visitor.findOneAndUpdate(
+        { userId },
+        {
+          userId,
+          role,
+          location: {
+            type: 'Point',
+            coordinates: [longitude, latitude]
+          },
           zone: zoneName,
-          message: `Zone "${zoneName}" ist überfüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
-        });
-        await incident.save();
+          lastUpdated: new Date()
+        },
+        { upsert: true, new: true }
+      );
 
-        // Optional: Sende den Incident auch per WebSocket an Clients, wenn nötig
-        const incidentPayload = JSON.stringify({ incident: incident });
-        wsConnections.forEach(conn => {
-          conn.send(incidentPayload);
-        });
+      // Wenn eine Zone gefunden wurde und sie eine Kapazität hat, prüfe die Besucheranzahl
+      if (zone && zone.capacity) {
+        const count = await Visitor.countDocuments({ zone: zoneName });
+        if (count > zone.capacity) {
+          // Erzeuge einen Incident, falls überfüllt
+          const incident = new Incident({
+            zone: zoneName,
+            message: `Zone "${zoneName}" ist überfüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
+          });
+          await incident.save();
+
+          // Sende den Incident per WebSocket an alle Clients
+          const incidentPayload = JSON.stringify({ incident: incident });
+          wsConnections.forEach(conn => {
+            conn.send(incidentPayload);
+          });
+        }
       }
+
+      // Sende den aktualisierten Besucher an alle WebSocket-Clients
+      const payload = JSON.stringify(visitor);
+      wsConnections.forEach(conn => {
+        conn.send(payload);
+      });
+
+      reply.send({ success: true });
+    } catch (error) {
+      fastify.log.error('Fehler beim Tracken:', error);
+      reply.code(500).send({ error: 'Serverfehler' });
     }
-
-    // Sende den aktualisierten Besucher an alle WebSocket-Clients
-    const payload = JSON.stringify(visitor);
-    wsConnections.forEach(conn => {
-      conn.send(payload);
-    });
-
-    reply.send({ success: true });
   });
 
   fastify.get('/heatmap', async (request, reply) => {
-    const all = await Visitor.find({});
-    reply.send(all);
+    try {
+      const all = await Visitor.find({});
+      reply.send(all);
+    } catch (error) {
+      fastify.log.error('Fehler beim Abrufen der Heatmap-Daten:', error);
+      reply.code(500).send({ error: 'Serverfehler' });
+    }
   });
 }

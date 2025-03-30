@@ -6,6 +6,7 @@ import fastifyJWT from '@fastify/jwt';
 import connectDB from './db.js';
 import zonesRoutes from './routes/zonesroute.js';
 import authRoutes from './routes/auths.js';
+import moveRoute from './routes/moveroute.js';
 
 import emergencyRoute from './routes/emergencyroute.js';
 
@@ -24,7 +25,7 @@ await fastify.register(fastifyJWT, {
 // Registriere CORS (wie zuvor)
 await fastify.register(fastifyCors, {
   origin: 'http://localhost:4200',
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST','PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type']
 });
 
@@ -62,6 +63,7 @@ fastify.register(authRoutes, { prefix: '/api' });
 fastify.register(emergencyRoute, {prefix: '/api'});
 
 fastify.register(incidentsRoutes, { prefix: '/api' });
+fastify.register(moveRoute, {prefix: '/api'});
 
 
 // Starte den Server

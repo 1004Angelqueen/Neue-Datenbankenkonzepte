@@ -1,0 +1,7 @@
+<div class="move-visitors">
+    <button (click)="moveVisitors()" [disabled]="loading">
+      {{ loading ? 'Bewege Besucher...' : 'Bewege Besucher' }}
+    </button>
+    <p *ngIf="message">{{ message }}</p>
+  </div>
+  

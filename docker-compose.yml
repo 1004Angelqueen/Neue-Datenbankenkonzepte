@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: my-mongo-container
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d
+      - mongo_data:/data/db
+    restart: always
+
+volumes:
+  mongo_data:

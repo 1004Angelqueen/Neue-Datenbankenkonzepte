@@ -9,6 +9,18 @@ export interface Incident {
   createdAt: string;
 }
 
+export interface Emergency {
+  _id: string;
+  location: {
+    type: string;          // z. B. "Point"
+    coordinates: number[]; // [longitude, latitude]
+  };
+  zone: string;
+  message: string;
+  createdAt: string;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -20,6 +32,10 @@ export class IncidentService {
   // Alle Incidents abrufen
   getIncidents(): Observable<Incident[]> {
     return this.http.get<Incident[]>(`${this.apiUrl}/incidents`);
+  }
+
+  getEmergencys(): Observable<Emergency[]> {
+    return this.http.get<Emergency[]>(`${this.apiUrl}/emergency`);
   }
 
   // Incident anhand der _id löschen
