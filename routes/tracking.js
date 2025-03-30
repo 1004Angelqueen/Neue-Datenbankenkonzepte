@@ -28,10 +28,7 @@ export default async function (fastify, opts) {
 
       // Falls eine Zone gefunden wurde, verwende deren Name, ansonsten "Unbekannt"
       const zoneName = zone ? zone.name : 'Unbekannt';
-
-      // Logge das Ergebnis der Zone-Abfrage
       fastify.log.info('Gefundene Zone:', zoneName);
-
 
       // Besucher-Dokument updaten oder erstellen, inklusive Zonen-Zuweisung
       const visitor = await Visitor.findOneAndUpdate(
@@ -49,72 +46,41 @@ export default async function (fastify, opts) {
         { upsert: true, new: true }
       );
 
-      // Wenn eine Zone gefunden wurde und sie eine Kapazität hat, prüfe die Besucheranzahl
+      // Prüfe Kapazität, falls Zone und Kapazität vorhanden sind
       if (zone && zone.capacity) {
         const count = await Visitor.countDocuments({ zone: zoneName });
-        if (count > zone.capacity) {
-          // Erzeuge einen Incident, falls überfüllt
+        // Wenn die Zone voll oder zur Hälfte gefüllt ist, erzeuge entsprechende Incidents
+        if (count >= zone.capacity) {
           const incident = new Incident({
+            type: 'full',
             zone: zoneName,
-            message: `Zone "${zoneName}" ist überfüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
+            message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`
           });
           await incident.save();
-
-          // Sende den Incident per WebSocket an alle Clients
-          const incidentPayload = JSON.stringify({ incident: incident });
+          const notification = {
+            type: 'full',
+            zone: zoneName,
+            message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`
+          };
           wsConnections.forEach(conn => {
-            conn.send(incidentPayload);
+            conn.send(JSON.stringify({ incident, notification }));
+          });
+        } else if (count >= zone.capacity / 2 && count < zone.capacity) {
+          const incident = new Incident({
+            type: 'half',
+            zone: zoneName,
+            message: `Warnung: Zone "${zoneName}" ist zur Hälfte gefüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
+          });
+          await incident.save();
+          const notification = {
+            type: 'half',
+            zone: zoneName,
+            message: `Warnung: Zone "${zoneName}" ist zur Hälfte gefüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
+          };
+          wsConnections.forEach(conn => {
+            conn.send(JSON.stringify({ incident, notification }));
           });
         }
- // Innerhalb der '/track' Route, wo die Kapazität geprüft wird
-if (zone && zone.capacity) {
-  const count = await Visitor.countDocuments({ zone: zoneName });
-
-  // Wenn die Zone voll ist
-  if (count >= zone.capacity) {
-    const incident = new Incident({
-      type: 'full',  // Wichtig: Type hinzufügen
-      zone: zoneName,
-      message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`
-    });
-    await incident.save();
-    
-    // Beide senden: incident UND notification
-    const notification = {
-      type: 'full',
-      zone: zoneName,
-      message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`
-    };
-    
-    wsConnections.forEach(conn => {
-      conn.send(JSON.stringify({ 
-        incident: incident,
-        notification: notification 
-      }));
-    });
-  }
-  // Wenn die Zone zur Hälfte gefüllt ist
-  else if (count >= zone.capacity / 2 && count < zone.capacity) {
-    const incident = new Incident({
-      type: 'half',  // Wichtig: Type hinzufügen
-      zone: zoneName,
-      message: `Warnung: Zone "${zoneName}" ist zur Hälfte gefüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
-    });
-    await incident.save();
-    
-    // Beide senden: incident UND notification
-    const notification = {
-      type: 'half',
-      zone: zoneName,
-      message: `Warnung: Zone "${zoneName}" ist zur Hälfte gefüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
-    };
-    
-    wsConnections.forEach(conn => {
-      conn.send(JSON.stringify({ 
-        incident: incident,
-        notification: notification 
-      }));
-    });
       }
 
       // Sende den aktualisierten Besucher an alle WebSocket-Clients
@@ -123,17 +89,13 @@ if (zone && zone.capacity) {
         conn.send(payload);
       });
 
+      // Sende nur eine Antwort an den Client
       reply.send({ success: true });
     } catch (error) {
       fastify.log.error('Fehler beim Tracken:', error);
       reply.code(500).send({ error: 'Serverfehler' });
     }
-
-
-    // Antwort wird immer gesendet, egal ob eine Zone gefunden wurde oder nicht.
-    reply.send({ success: true });
-
-  }});
+  });
 
   fastify.get('/heatmap', async (request, reply) => {
     try {
