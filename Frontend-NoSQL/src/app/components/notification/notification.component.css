@@ -1,15 +1,32 @@
-.notification-container {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-  }
-  
-  .notification {
-    background: #ffdddd;
-    border: 1px solid #ff0000;
-    padding: 0.5rem 1rem;
-    margin-bottom: 0.5rem;
-    border-radius: 3px;
-  }
-  
+/* Basis-Stil für alle Notifications */
+::ng-deep .mat-snack-bar-container {
+  margin-top: 20px !important;
+  min-width: 300px !important;
+  max-width: 600px !important;
+  padding: 14px 16px !important;
+  border-radius: 4px !important;
+}
+
+/* Volle Kapazität */
+::ng-deep .full-capacity-notification {
+  background-color: #d32f2f !important; /* Rot */
+  color: white !important;
+  font-weight: bold !important;
+}
+
+/* Fast volle Kapazität */
+::ng-deep .almost-full-notification {
+  background-color: #ff9800 !important; /* Orange */
+  color: white !important;
+}
+
+/* Info-Notification */
+::ng-deep .info-notification {
+  background-color: #2196f3 !important; /* Blau */
+  color: white !important;
+}
+
+/* Schließen-Button */
+::ng-deep .mat-simple-snackbar-action {
+  color: white !important;
+}

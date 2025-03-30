@@ -6,11 +6,8 @@ import fastifyJWT from '@fastify/jwt';
 import connectDB from './db.js';
 import zonesRoutes from './routes/zonesroute.js';
 import authRoutes from './routes/auths.js';
-
 import emergencyRoute from './routes/emergencyroute.js';
-
 import incidentsRoutes from './routes/incidents.js';
-
 
 const fastify = Fastify({ logger: true });
 
@@ -19,9 +16,10 @@ await connectDB();
 
 // Registriere fastify-jwt mit einem geheimen Schlüssel
 await fastify.register(fastifyJWT, {
-  secret: 'DEIN_GEHEIMER_SCHLÜSSEL' // Ersetze diesen Schlüssel mit einem sicheren, langen Schlüssel
+  secret: 'DEIN_GEHEIMER_SCHLÜSSEL'
 });
-// Registriere CORS (wie zuvor)
+
+// Registriere CORS
 await fastify.register(fastifyCors, {
   origin: 'http://localhost:4200',
   methods: ['GET', 'POST'],
@@ -29,46 +27,118 @@ await fastify.register(fastifyCors, {
 });
 
 // Registriere das WebSocket-Plugin
-await fastify.register(fastifyWebsocket);
+await fastify.register(fastifyWebsocket, {
+  options: { 
+    clientTracking: true 
+  }
+});
 
 // Array zum Speichern der WebSocket-Verbindungen
-let connections = [];
+let connections = new Set();
 
-fastify.get('/ws', { websocket: true }, (connection, req) => {
-  // Füge die Verbindung zu unserem Array hinzu
-  connections.push(connection);
+// Hilfsfunktion zum Broadcast
+function broadcast(message) {
+  const messageStr = JSON.stringify(message);
+  for (const connection of connections) {
+    try {
+      connection.send(messageStr);
+    } catch (err) {
+      fastify.log.error('Fehler beim Senden der Broadcast-Nachricht:', err);
+    }
+  }
+}
+
+// WebSocket Route
+fastify.get('/ws', { websocket: true }, function wsHandler(connection) {
   fastify.log.info('Neuer WebSocket-Client verbunden.');
+  
+  connections.add(connection);
 
-  // Verwende direkt connection.on('close', ...) anstelle von connection.socket.on(...)
+  // Sende Willkommensnachricht
+  try {
+    connection.send(JSON.stringify({
+      type: 'notification',
+      message: 'WebSocket Verbindung hergestellt',
+      timestamp: new Date().toISOString()
+    }));
+  } catch (err) {
+    fastify.log.error('Fehler beim Senden der Willkommensnachricht:', err);
+  }
+
+  // Message Handler
+  connection.on('message', (rawMessage) => {
+    try {
+      const message = JSON.parse(rawMessage.toString());
+      fastify.log.info('Nachricht empfangen:', message);
+
+      // Echo die Nachricht zurück
+      connection.send(JSON.stringify({
+        type: 'echo',
+        data: message,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (err) {
+      fastify.log.error('Fehler beim Verarbeiten der Nachricht:', err);
+    }
+  });
+
+  // Close Handler
   connection.on('close', () => {
-    connections = connections.filter(conn => conn !== connection);
+    connections.delete(connection);
     fastify.log.info('WebSocket-Client hat die Verbindung geschlossen.');
   });
 });
 
+// Hilfsfunktion zum Senden von Benachrichtigungen
+function sendNotification(message, type = 'info') {
+  broadcast({
+    type: 'notification',
+    message: message,
+    notificationType: type,
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Root Route
 fastify.get('/', async (request, reply) => {
   reply.send({ message: 'Willkommen bei der API!' });
 });
 
+// Dekoriere fastify mit den Broadcast-Funktionen
+fastify.decorate('broadcast', broadcast);
+fastify.decorate('sendNotification', sendNotification);
 
+// Route Registrierungen
+fastify.register(trackingRoutes, { 
+  prefix: '/api',
+  websocketConnections: connections,
+  broadcast,
+  sendNotification
+});
 
-// In deinen bestehenden Routen, z. B. im /api/track-Endpoint,
-// kannst du nach dem Speichern eines Standortes den neuen Standort an alle Clients senden:
-fastify.register(trackingRoutes, { prefix: '/api', websocketConnections: connections });
 fastify.register(zonesRoutes, { prefix: '/api' });
-// Registriere die Auth-Routen unter /api
 fastify.register(authRoutes, { prefix: '/api' });
-
-fastify.register(emergencyRoute, {prefix: '/api'});
-
+fastify.register(emergencyRoute, { prefix: '/api' });
 fastify.register(incidentsRoutes, { prefix: '/api' });
 
-
-// Starte den Server
+// Server starten
 fastify.listen({ port: 3000 }, err => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);
   }
   fastify.log.info('Server läuft auf Port 3000');
+});
+
+// Cleanup bei Server-Beendigung
+process.on('SIGTERM', () => {
+  for (const connection of connections) {
+    try {
+      connection.close();
+    } catch (err) {
+      fastify.log.error('Fehler beim Schließen der Verbindung:', err);
+    }
+  }
+  connections.clear();
+  fastify.close();
 });
