@@ -1,6 +1,8 @@
 services:
   mongodb:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: mongodb
     ports:
       - "27017:27017"
@@ -8,6 +10,26 @@ services:
       MONGO_INITDB_DATABASE: eventDB
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  webapp:
+    # Dein Web-App Container Configuration
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp  # Erstelle diese Datei für deine Webapp
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    ports:
+      - "3000:3000"  # Oder welchen Port auch immer deine App verwendet
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   mongodb_data:
