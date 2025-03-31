@@ -31,11 +31,28 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.reloadSubscription = interval(5000).subscribe(() => {
       this.loadInitialData();
       this.loadZones();
-      this.addColoredMarkers(); // Marker hinzufügen
+      this.addColoredMarkers(); 
+      this.updateVisitorCounts(); 
+
 
     });
   }
-
+  private updateVisitorCounts(): void {
+    // Aktualisiere die Besucherzahlen für alle Zonen
+    const counts = new Map<string, number>();
+    
+    this.visitorData.forEach(visitor => {
+      if (visitor.zone) {
+        const count = counts.get(visitor.zone) || 0;
+        counts.set(visitor.zone, count + 1);
+      }
+    });
+  
+    // Debug-Ausgabe der Besucherzahlen
+    counts.forEach((count, zoneName) => {
+      console.log(`Zone ${zoneName}: ${count} Besucher`);
+    });
+  }
   private loadInitialData(): void {
     this.http.get<any[]>('http://localhost:3000/api/heatmap').subscribe({
       next: (data) => {
@@ -194,47 +211,82 @@ private addColoredMarkers(): void {
   this.loadZones();
   }
   loadZones(): void {
+    // Besucherzählung pro Zone
+    const visitorsPerZone = new Map<string, number>();
+    this.visitorData.forEach(visitor => {
+      if (visitor.zone) {
+        visitorsPerZone.set(visitor.zone, (visitorsPerZone.get(visitor.zone) || 0) + 1);
+      }
+    });
+  
+    // Debug: Zeige Besucherzahlen
+    visitorsPerZone.forEach((count, zone) => {
+      console.log(`${zone}: ${count} Besucher`);
+    });
+  
     this.http.get<any[]>('http://localhost:3000/api/zones').subscribe(
       zones => {
         console.log('Geladene Zonen:', zones);
+        
+        // Bestehende Polygone entfernen
+        if (this.map) {
+          this.map.eachLayer((layer: any) => {
+            if (layer instanceof L.Polygon) {
+              this.map.removeLayer(layer);
+            }
+          });
+        }
+  
         zones.forEach(zone => {
-          // Konvertiere GeoJSON-Koordinaten ([lng, lat]) in Leaflet-Koordinaten ([lat, lng])
+          // Konvertiere GeoJSON-Koordinaten
           const polygonPoints: L.LatLngTuple[] = zone.area.coordinates[0].map((coord: number[]) => {
             return [coord[1], coord[0]];
           });
+  
+          // Aktuelle Besucherzahl aus der Map holen
+          const currentVisitors = visitorsPerZone.get(zone.name) || 0;
+  
           // Standardfarbe ist blau
           let borderColor = 'blue';
           
-        // Prüfen, ob aktuelle Besucherzahl (currentVisitors) vorhanden ist, um die Auslastung zu berechnen
-        if (zone.currentVisitors !== undefined && zone.capacity) {
-          const percentage = (zone.currentVisitors / zone.capacity) * 100;
-          if (percentage >= 90) {
-            borderColor = 'red';    // Zone ist voll
-          } else if (percentage >= 50) {
-            borderColor = 'yellow'; // Zone ist halb voll
+          // Auslastung berechnen und Farbe setzen
+          if (zone.capacity) {
+            const percentage = (currentVisitors / zone.capacity) * 100;
+            
+            if (percentage >= 90) {
+              borderColor = 'red';    // Zone ist voll
+            } else if (percentage >= 50) {
+              borderColor = 'yellow'; // Zone ist halb voll
+            }
           }
-        }
-          // Erstelle das Polygon und speichere es in einer Variablen
+  
+          // Polygon erstellen
           const polygon = L.polygon(polygonPoints, {
-            color: borderColor,       // Rahmenfarbe der Zone
-            fillColor: borderColor,   // Füllfarbe der Zone
-            fillOpacity: 0       // Transparenz
+            color: borderColor,     // Rahmenfarbe der Zone
+            fillColor: borderColor, // Füllfarbe der Zone
+            fillOpacity: 0.2,      // Leichte Transparenz
+            weight: 2              // Liniendicke
           }).addTo(this.map);
           
+          // Tooltip-Text mit Besucherzahlen
           let tooltipText = zone.name;
-            
-          // Automatische Erkennung anhand des Namens:
-          // Wenn der Name "eingang" enthält, setzen wir den Tooltip auf "Eingang"
-          if (zone.name.toLowerCase().includes('eingang')) {
-            tooltipText = 'Eingang';
-          }
-          // Wenn der Name "haupttribüne" enthält, setzen wir den Tooltip auf "Haupttribüne"
-          else if (zone.name.toLowerCase().includes('haupttribüne')) {
-            tooltipText = 'Haupttribüne';
+          if (zone.capacity) {
+            tooltipText += `\n${currentVisitors}/${zone.capacity} Besucher`;
           }
           
-          // Tooltip an das erstellte Polygon binden
-          polygon.bindTooltip(tooltipText, { direction: 'top', opacity: 0.8 });
+          // Name vereinfachen falls gewünscht
+          if (zone.name.toLowerCase().includes('eingang')) {
+            tooltipText = `Eingang\n${currentVisitors}/${zone.capacity} Besucher`;
+          } else if (zone.name.toLowerCase().includes('haupttribüne')) {
+            tooltipText = `Haupttribüne\n${currentVisitors}/${zone.capacity} Besucher`;
+          }
+          
+          // Tooltip an das Polygon binden - nur beim Hover sichtbar
+          polygon.bindTooltip(tooltipText, { 
+            direction: 'top', 
+            opacity: 0.9,
+            permanent: false // Tooltip nur beim Hover sichtbar
+          });
         });
       },
       err => console.error('Fehler beim Laden der Zonen:', err)
