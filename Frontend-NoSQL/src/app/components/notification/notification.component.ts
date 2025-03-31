@@ -3,6 +3,21 @@ import { CommonModule } from '@angular/common';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { WebsocketService } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+
+interface WebSocketMessage {
+  incident?: {
+    type?: string;
+    zone?: string;
+    message?: string;
+  };
+  notification?: {
+    type?: string;
+    zone?: string;
+    message?: string;
+    requiresAction?: boolean;
+  };
+}
 
 @Component({
   selector: 'app-notification',
@@ -12,53 +27,56 @@ import { Subscription } from 'rxjs';
 })
 export class NotificationComponent implements OnInit, OnDestroy {
   private wsSubscription: Subscription | undefined;
+  private roleSubscription: Subscription | undefined;
+  private userRole: string = '';
 
   constructor(
     private wsService: WebsocketService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private authService: AuthService
   ) {
-    console.log('NotificationComponent konstruiert');
+    this.userRole = this.authService.getUserRole();
+    console.log('NotificationComponent konstruiert, Benutzerrolle:', this.userRole);
   }
 
   ngOnInit(): void {
     console.log('NotificationComponent initialisiert');
     
+    // Abonniere Änderungen der Benutzerrolle
+    this.roleSubscription = this.authService.userRole$.subscribe(role => {
+      this.userRole = role.toLowerCase(); // Konvertiere zu Kleinbuchstaben für konsistenten Vergleich
+      console.log('Benutzerrolle aktualisiert:', this.userRole);
+    });
+    
     this.wsSubscription = this.wsService.getMessages().subscribe({
-      next: (message: any) => {
+      next: (message: WebSocketMessage) => {
         console.log('WebSocket Nachricht empfangen:', message);
-
-        // Verarbeite verschiedene Nachrichtentypen
-        if (message.type === 'echo' && message.data) {
-          // Verarbeite Zone-Status Benachrichtigungen
-
-          if (message.data.zoneId && message.data.currentVisitors !== undefined) {
-            const zone = message.data;
-            const capacity = (zone.currentVisitors / zone.maxCapacity) * 100;
-            
-            let notificationType = 'info';
-            let notificationMessage = '';
-
-            if (capacity >= 110) {
-              notificationType = 'error';
-              notificationMessage = `Zone ${zone.zoneId} ist überbelegt! (${zone.currentVisitors}/${zone.maxCapacity})`;
-            } else if (capacity === 100) {
-              notificationType = 'warning';
-              notificationMessage = `Zone ${zone.zoneId} ist voll! (${zone.currentVisitors}/${zone.maxCapacity})`;
-            } else if (capacity >= 80) {
-              notificationType = 'warning';
-              notificationMessage = `Zone ${zone.zoneId} wird bald voll! (${zone.currentVisitors}/${zone.maxCapacity})`;
-            }
-
-            if (notificationMessage) {
-              this.showNotification(notificationMessage, notificationType);
-            }
+        
+        // Prüfe auf incident und notification
+        if (message.incident || message.notification) {
+          const notification = message.notification || {};
+          const incident = message.incident || {};
+          
+          // Verwende die Nachricht aus notification oder incident
+          const messageText = notification.message || incident.message || '';
+          const notificationType = notification.type || incident.type || 'info';
+          
+          // Zeige die Snackbar-Benachrichtigung für alle
+          if (messageText) {
+            console.log('Zeige Notification:', { messageText, notificationType });
+            this.showNotification(messageText, notificationType);
           }
-        } else if (message.notification) {
-          // Direkte Benachrichtigungen
-          this.showNotification(
-            message.notification.message,
-            message.notification.type || 'info'
-          );
+          
+          // Prüfe ob es sich um eine "full" Benachrichtigung handelt und der Benutzer Security ist
+          const isFull = notificationType === 'full';
+          const isSecurity = this.userRole.toLowerCase() === 'security';
+          
+          console.log('Alert-Prüfung:', { isFull, isSecurity, userRole: this.userRole });
+          
+          if (isFull && isSecurity) {
+            console.log('Security Alert wird ausgelöst für:', messageText);
+            window.alert(messageText);
+          }
         }
       },
       error: (error) => {
@@ -69,8 +87,10 @@ export class NotificationComponent implements OnInit, OnDestroy {
   }
 
   private showNotification(message: string, type: string = 'info'): void {
+    console.log(`Zeige Notification: ${message} (Typ: ${type})`);
     let panelClass = ['notification-snackbar'];
-    switch (type) {
+    
+    switch (type.toLowerCase()) {
       case 'error':
         panelClass.push('error-notification');
         break;
@@ -80,12 +100,18 @@ export class NotificationComponent implements OnInit, OnDestroy {
       case 'success':
         panelClass.push('success-notification');
         break;
+      case 'full':
+        panelClass.push('full-notification');
+        break;
+      case 'half':
+        panelClass.push('warning-notification');
+        break;
       default:
         panelClass.push('info-notification');
     }
 
     this.snackBar.open(message, 'Schließen', {
-      duration: 50000,
+      duration: 5000,
       horizontalPosition: 'right',
       verticalPosition: 'top',
       panelClass: panelClass
@@ -95,6 +121,9 @@ export class NotificationComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.wsSubscription) {
       this.wsSubscription.unsubscribe();
+    }
+    if (this.roleSubscription) {
+      this.roleSubscription.unsubscribe();
     }
   }
 }

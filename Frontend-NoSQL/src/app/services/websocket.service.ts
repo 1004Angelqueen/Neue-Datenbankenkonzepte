@@ -8,6 +8,17 @@ interface WebSocketMessage {
   message: any;
   timestamp?: string;
   notificationType?: string;
+  incident?: {
+    type: string;
+    zone: string;
+    message: string;
+  };
+  notification?: {
+    type: string;
+    zone: string;
+    message: string;
+    requiresAction?: boolean;
+  };
 }
 
 @Injectable({
@@ -22,33 +33,56 @@ export class WebsocketService {
   private readonly RECONNECTION_DELAY = 2000;
   private readonly PING_INTERVAL = 30000; // 30 Sekunden
   private pingInterval: any;
-  private wsUrl = 'ws://localhost:3000/ws';
+  private readonly wsUrl = 'ws://localhost:3000/ws';
+  private userRole: string = 'visitor'; // Standardrolle
 
   constructor() {
+    // Versuchen Sie die Benutzerrolle aus dem localStorage oder einem anderen Service zu bekommen
+    this.userRole = localStorage.getItem('userRole') || 'visitor';
     this.connect();
     this.setupPing();
   }
 
+  // Methode zum Setzen der Benutzerrolle
+  public setUserRole(role: string): void {
+    this.userRole = role;
+    // Verbindung neu aufbauen mit neuer Rolle
+    this.disconnect();
+    this.connect();
+  }
+
   private setupPing(): void {
-    // Ping-Intervall aufsetzen
     if (this.pingInterval) {
       clearInterval(this.pingInterval);
     }
     
     this.pingInterval = setInterval(() => {
-      this.sendMessage({ type: 'ping', timestamp: new Date().toISOString() });
+      this.sendMessage({ 
+        type: 'ping', 
+        timestamp: new Date().toISOString(),
+        role: this.userRole // Rolle mit dem Ping senden
+      });
     }, this.PING_INTERVAL);
   }
 
   private connect(): void {
     if (!this.socket$ || this.socket$.closed) {
+      // URL mit Rolle als Query-Parameter
+      const wsUrlWithRole = `${this.wsUrl}?role=${this.userRole}`;
+      
       this.socket$ = webSocket({
-        url: this.wsUrl,
+        url: wsUrlWithRole,
         openObserver: {
           next: () => {
             console.log('WebSocket Verbindung geöffnet');
             this.connectionStatus$.next(true);
             this.reconnectionAttempts = 0;
+            // Initial die Rolle senden
+            this.sendMessage({ 
+              type: 'init', 
+              role: this.userRole,
+              timestamp: new Date().toISOString() 
+            });
           }
         },
         closeObserver: {
@@ -68,9 +102,22 @@ export class WebsocketService {
         })
       ).subscribe({
         next: (message: WebSocketMessage) => {
-          // Ignoriere Ping-Nachrichten für den MessageSubject
+          // Ping-Nachrichten ignorieren
           if (message.type !== 'ping') {
-            this.messagesSubject.next(message);
+            // Prüfen, ob es sich um eine Security-Benachrichtigung handelt
+            if (message.notification?.requiresAction && this.userRole !== 'security') {
+              // Für Nicht-Security-Benutzer: requiresAction-Flag entfernen
+              const modifiedMessage = {
+                ...message,
+                notification: {
+                  ...message.notification,
+                  requiresAction: false
+                }
+              };
+              this.messagesSubject.next(modifiedMessage);
+            } else {
+              this.messagesSubject.next(message);
+            }
           }
         },
         error: (error) => {
@@ -92,7 +139,6 @@ export class WebsocketService {
       }, this.RECONNECTION_DELAY);
     } else {
       console.log('Maximale Anzahl an Wiederverbindungsversuchen erreicht');
-      // Optional: Event auslösen für UI-Benachrichtigung
       this.messagesSubject.next({
         type: 'error',
         message: 'Verbindung zum Server konnte nicht hergestellt werden',
@@ -116,6 +162,7 @@ export class WebsocketService {
       try {
         this.socket$.next({
           ...message,
+          role: this.userRole, // Rolle bei jeder Nachricht mitsenden
           timestamp: new Date().toISOString()
         });
       } catch (error) {
@@ -141,8 +188,12 @@ export class WebsocketService {
     this.connectionStatus$.next(false);
   }
 
-  // Wird beim Zerstören des Services aufgerufen
   ngOnDestroy() {
     this.disconnect();
+  }
+
+  // Hilfsmethode um die aktuelle Benutzerrolle zu erhalten
+  public getUserRole(): string {
+    return this.userRole;
   }
 }

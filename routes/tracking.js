@@ -13,8 +13,7 @@ export default async function (fastify, opts) {
     }
 
     try {
-      // Finde eine Zone, in der der Punkt liegt.
-      // GeoJSON-Koordinaten sind im Format [longitude, latitude].
+      // Zone finden
       const zone = await Zone.findOne({
         area: {
           $geoIntersects: {
@@ -26,11 +25,10 @@ export default async function (fastify, opts) {
         }
       });
 
-      // Falls eine Zone gefunden wurde, verwende deren Name, ansonsten "Unbekannt"
       const zoneName = zone ? zone.name : 'Unbekannt';
       fastify.log.info('Gefundene Zone:', zoneName);
 
-      // Besucher-Dokument updaten oder erstellen, inklusive Zonen-Zuweisung
+      // Besucher aktualisieren
       const visitor = await Visitor.findOneAndUpdate(
         { userId },
         {
@@ -46,50 +44,91 @@ export default async function (fastify, opts) {
         { upsert: true, new: true }
       );
 
-      // Prüfe Kapazität, falls Zone und Kapazität vorhanden sind
-      if (zone && zone.capacity) {
+      // Kapazitätsprüfung
+      if (zone?.capacity) {
         const count = await Visitor.countDocuments({ zone: zoneName });
-        // Wenn die Zone voll oder zur Hälfte gefüllt ist, erzeuge entsprechende Incidents
+        
+        // Für volle Zone
         if (count >= zone.capacity) {
-          const incident = new Incident({
-            type: 'full',
-            zone: zoneName,
-            message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`
-          });
-          await incident.save();
-          const notification = {
+          const incidentData = {
             type: 'full',
             zone: zoneName,
             message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`
           };
+          
+          // Incident in DB speichern
+          const incident = new Incident(incidentData);
+          await incident.save();
+
+          // Separate Nachrichten für Security und normale Benutzer
+          const securityNotification = {
+            type: 'full',
+            zone: zoneName,
+            message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`,
+            requiresAction: true // Flag für Security-relevante Nachrichten
+          };
+
+          const regularNotification = {
+            type: 'full',
+            zone: zoneName,
+            message: `Zone "${zoneName}" ist voll: ${count} Besucher (Kapazität: ${zone.capacity}).`,
+            requiresAction: false
+          };
+
+          // An alle Clients senden, aber mit unterschiedlichen Notifications
           wsConnections.forEach(conn => {
-            conn.send(JSON.stringify({ incident, notification }));
+            const wsMessage = {
+              incident: {
+                ...incident.toObject(),
+                type: 'full'
+              },
+              // Wenn der Client Security ist, Security-Notification senden, sonst reguläre
+              notification: conn.userRole === 'security' ? securityNotification : regularNotification
+            };
+            conn.send(JSON.stringify(wsMessage));
           });
-        } else if (count >= zone.capacity / 2 && count < zone.capacity) {
-          const incident = new Incident({
+        } 
+        // Für halb volle Zone
+        else if (count >= zone.capacity / 2 && count < zone.capacity) {
+          const incidentData = {
             type: 'half',
             zone: zoneName,
             message: `Warnung: Zone "${zoneName}" ist zur Hälfte gefüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
-          });
+          };
+          
+          // Incident in DB speichern
+          const incident = new Incident(incidentData);
           await incident.save();
+
+          // Notification vorbereiten
           const notification = {
             type: 'half',
             zone: zoneName,
             message: `Warnung: Zone "${zoneName}" ist zur Hälfte gefüllt: ${count} Besucher (Kapazität: ${zone.capacity}).`
           };
+
+          // WebSocket-Nachricht mit korrektem type-Feld senden
+          const wsMessage = {
+            incident: {
+              ...incident.toObject(),
+              type: 'half' // Explizit den type setzen
+            },
+            notification
+          };
+
+          // An alle Clients senden
           wsConnections.forEach(conn => {
-            conn.send(JSON.stringify({ incident, notification }));
+            conn.send(JSON.stringify(wsMessage));
           });
         }
       }
 
-      // Sende den aktualisierten Besucher an alle WebSocket-Clients
-      const payload = JSON.stringify(visitor);
+      // Besucher-Update an alle Clients senden
+      const visitorPayload = JSON.stringify(visitor);
       wsConnections.forEach(conn => {
-        conn.send(payload);
+        conn.send(visitorPayload);
       });
 
-      // Sende nur eine Antwort an den Client
       reply.send({ success: true });
     } catch (error) {
       fastify.log.error('Fehler beim Tracken:', error);
