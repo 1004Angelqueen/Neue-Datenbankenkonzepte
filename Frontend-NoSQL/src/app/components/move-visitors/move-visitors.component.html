@@ -1,7 +1,21 @@
-<div class="move-visitors">
-    <button (click)="moveVisitors()" [disabled]="loading">
-      {{ loading ? 'Bewege Besucher...' : 'Bewege Besucher' }}
-    </button>
-    <p *ngIf="message">{{ message }}</p>
-  </div>
-  
+<div class="movement-controls">
+  <button 
+    class="movement-btn"
+    [class.active]="isMoving"
+    [disabled]="isMoving" 
+    (click)="startMovement()">
+    Start
+  </button>
+  <button 
+    class="movement-btn"
+    [class.active]="!isMoving"
+    [disabled]="!isMoving" 
+    (click)="stopMovement()">
+    Stop
+  </button>
+  <span 
+    class="status-message"
+    [class.error]="isError">
+    {{ message }}
+  </span>
+</div>

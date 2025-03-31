@@ -13,4 +13,8 @@ export class MovementService {
   moveVisitors(): Observable<any> {
     return this.http.patch(`${this.apiUrl}/move-visitors-continuous`, {});
   }
+
+  stopMovement(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/stop-visitors-movement`, {});
+  }
 }

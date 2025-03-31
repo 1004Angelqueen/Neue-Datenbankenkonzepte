@@ -1,63 +1,53 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { MovementService } from '../../services/movement.service';
-import { interval, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MovementService } from '../../services/movement.service';
 
 @Component({
-  selector: 'app-move-visitors',
+  selector: 'app-movement',
+  templateUrl:'move-visitors.component.html',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <button (click)="startMovement()" [disabled]="movementActive">Bewegung starten</button>
-    <button (click)="stopMovement()" [disabled]="!movementActive">Bewegung stoppen</button>
-    <p *ngIf="message">{{ message }}</p>
-  `,
-  styles: [`
-    button { margin-right: 10px; }
-  `]
+  
 })
-export class MoveVisitorsComponent implements OnInit, OnDestroy {
-  movementActive = false;
+export class MovementComponent {
+  isMoving = false;
+  isError = false;
   message = '';
-  private movementSub!: Subscription;
 
   constructor(private movementService: MovementService) {}
 
-  ngOnInit(): void {}
-
-  startMovement(): void {
-    if (!this.movementActive) {
-      this.movementActive = true;
-      this.message = 'Bewegung läuft...';
-      this.movementSub = interval(3000).pipe(
-        switchMap(() => this.movementService.moveVisitors())
-      ).subscribe({
-        next: (res: any) => {
-          this.message = res.message;
-        },
-        error: (err) => {
-          console.error('Fehler beim Bewegen der Besucher:', err);
-          this.message = 'Fehler beim Bewegen der Besucher';
-        }
-      });
-    }
-  }
-
-  stopMovement(): void {
-    if (this.movementActive) {
-      this.movementActive = false;
-      if (this.movementSub) {
-        console.log('Bewegung gestoppt. Unsubscribing...');
-        this.movementSub.unsubscribe();
+  startMovement() {
+    this.isMoving = true;
+    this.isError = false;
+    this.message = 'Starte Bewegung...';
+    
+    this.movementService.moveVisitors().subscribe({
+      next: (response) => {
+        console.log('Bewegung gestartet:', response);
+        this.message = response.message;
+      },
+      error: (error) => {
+        console.error('Fehler beim Starten der Bewegung:', error);
+        this.isMoving = false;
+        this.isError = true;
+        this.message = 'Fehler beim Starten der Bewegung: ' + 
+          (error.error?.message || error.message || 'Unbekannter Fehler');
       }
-      this.message = 'Bewegung gestoppt';
-    }
+    });
   }
 
-  ngOnDestroy(): void {
-    if (this.movementSub) {
-      this.movementSub.unsubscribe();
-    }
+  stopMovement() {
+    this.movementService.stopMovement().subscribe({
+      next: (response) => {
+        this.isMoving = false;
+        this.isError = false;
+        this.message = response.message;
+      },
+      error: (error) => {
+        this.isError = true;
+        this.message = 'Fehler beim Stoppen der Bewegung: ' + 
+          (error.error?.message || error.message || 'Unbekannter Fehler');
+      }
+    });
   }
 }

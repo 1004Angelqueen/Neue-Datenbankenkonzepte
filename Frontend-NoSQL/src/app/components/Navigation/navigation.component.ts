@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { EmergencyButtonComponent } from '../emergency-button/emergency-button.component';
-import { MoveVisitorsComponent } from '../move-visitors/move-visitors.component';
+import {  MovementComponent } from '../move-visitors/move-visitors.component';
 
 
 @Component({
@@ -12,7 +12,7 @@ import { MoveVisitorsComponent } from '../move-visitors/move-visitors.component'
 
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.css'],
-  imports: [RouterLink,CommonModule, EmergencyButtonComponent, MoveVisitorsComponent],
+  imports: [RouterLink, CommonModule, EmergencyButtonComponent, MovementComponent],
 })
 export class NavigationComponent {
   // Rollen, die den Zugriff auf die Incidents erlauben

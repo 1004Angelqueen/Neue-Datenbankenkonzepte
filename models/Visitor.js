@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const visitorSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
+  userId: { type: String, required: true, unique: true },
   role: { 
     type: String, 
     enum: ['Eventveranstalter', 'Besucher', 'Security', 'Sanitäter', 'Standbetreiber','visitor'], 
@@ -12,8 +12,13 @@ const visitorSchema = new mongoose.Schema({
     coordinates: { type: [Number], required: true }
   },
   zone: String,
-  lastUpdated: { type: Date, default: Date.now }
+  lastUpdated: { type: Date, default: Date.now },
+  targetPoint: {
+    type: [Number],
+    required: false
+  }
 });
+
 
 
 // Erstelle einen 2dsphere Index für Geo-Abfragen

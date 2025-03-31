@@ -1,131 +1,240 @@
 import Visitor from '../models/Visitor.js';
-import Zone from '../models/Zone.js';
 
-// Funktion: Berechnet einen zufälligen Zielpunkt, der maximal maxDistance (in Metern) vom Ausgangspunkt (lat, lng) entfernt ist.
-function randomDestinationPoint(lat, lng, maxDistance) {
-  console.log(`Berechne neuen Punkt für (lat: ${lat}, lng: ${lng}) mit maxDistance: ${maxDistance}m`);
-  const R = 6371000; // Erdradius in Metern
-  const d = Math.random() * maxDistance;
-  const bearing = Math.random() * 2 * Math.PI;
-  const latRad = lat * Math.PI / 180;
-  const lngRad = lng * Math.PI / 180;
+// Konstanten
+const isMovementActive = { value: false };
+const UPDATE_INTERVAL = 2000; // 2 Sekunden
+const MOVEMENT_SPEED = 0.00001;
 
-  const newLatRad = Math.asin(
-    Math.sin(latRad) * Math.cos(d / R) +
-    Math.cos(latRad) * Math.sin(d / R) * Math.cos(bearing)
-  );
-  const newLngRad = lngRad + Math.atan2(
-    Math.sin(bearing) * Math.sin(d / R) * Math.cos(latRad),
-    Math.cos(d / R) - Math.sin(latRad) * Math.sin(newLatRad)
-  );
+// Polygon für die Haupttribüne im GeoJSON-Format: [longitude, latitude]
+const FIXED_POLYGON = [
+  [10.28908, 48.6977],
+  [10.28953, 48.69803],
+  [10.29178, 48.69661],
+  [10.29117, 48.69611]
+];
 
-  const newLat = newLatRad * 180 / Math.PI;
-  const newLng = newLngRad * 180 / Math.PI;
-  console.log(`Neuer Punkt berechnet: [${newLng.toFixed(6)}, ${newLat.toFixed(6)}]`);
-  return [newLng, newLat]; // GeoJSON-Format: [lng, lat]
+// Hilfsfunktionen
+function getBoundingBox(polygon) {
+  try {
+    if (!Array.isArray(polygon) || polygon.length === 0) {
+      throw new Error('Ungültiges Polygon');
+    }
+    return polygon.reduce((box, point) => ({
+      minX: Math.min(box.minX, point[0]),
+      maxX: Math.max(box.maxX, point[0]),
+      minY: Math.min(box.minY, point[1]),
+      maxY: Math.max(box.maxY, point[1])
+    }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+  } catch (error) {
+    console.error('Fehler in getBoundingBox:', error);
+    return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+  }
 }
 
-// Funktion: Prüft mittels Ray-Casting, ob ein Punkt (im Format [lng, lat]) innerhalb eines Polygons liegt.
 function pointInPolygon(point, polygon) {
-  let x = point[0], y = point[1];
-  let inside = false;
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    let xi = polygon[i][0], yi = polygon[i][1];
-    let xj = polygon[j][0], yj = polygon[j][1];
-    let intersect = ((yi > y) !== (yj > y)) &&
-                    (x < (xj - xi) * (y - yi) / ((yj - yi) || 0.0000001) + xi);
-    if (intersect) inside = !inside;
+  try {
+    if (!Array.isArray(point) || point.length !== 2 || !Array.isArray(polygon)) {
+      return false;
+    }
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1];
+      const xj = polygon[j][0], yj = polygon[j][1];
+      
+      if (isNaN(xi) || isNaN(yi) || isNaN(xj) || isNaN(yj)) {
+        console.error('Ungültige Polygon-Koordinaten');
+        return false;
+      }
+      const intersect = ((yi > point[1]) !== (yj > point[1])) &&
+        (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  } catch (error) {
+    console.error('Fehler in pointInPolygon:', error);
+    return false;
   }
-  console.log(`Prüfe Punkt [${point[0].toFixed(6)}, ${point[1].toFixed(6)}] im Polygon: ${inside}`);
-  return inside;
+}
+
+function getRandomPointInPolygon(polygon) {
+  try {
+    const bounds = getBoundingBox(polygon);
+    let point;
+    let attempts = 0;
+    const maxAttempts = 100;
+    do {
+      point = [
+        bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
+        bounds.minY + Math.random() * (bounds.maxY - bounds.minY)
+      ];
+      attempts++;
+      if (attempts >= maxAttempts) {
+        console.warn('Maximale Versuche erreicht, verwende Polygonzentrum');
+        return [(bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2];
+      }
+    } while (!pointInPolygon(point, polygon));
+    return point;
+  } catch (error) {
+    console.error('Fehler in getRandomPointInPolygon:', error);
+    return polygon[0];
+  }
+}
+
+function moveTowardsPoint(currentPosition, targetPosition, movementSpeed) {
+  try {
+    if (!Array.isArray(currentPosition) || !Array.isArray(targetPosition) ||
+        currentPosition.length !== 2 || targetPosition.length !== 2) {
+      console.error('Ungültige Koordinaten:', { currentPosition, targetPosition });
+      return currentPosition;
+    }
+    const dx = targetPosition[0] - currentPosition[0];
+    const dy = targetPosition[1] - currentPosition[1];
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < movementSpeed || isNaN(distance)) {
+      return targetPosition;
+    }
+    const ratio = movementSpeed / distance;
+    const newPosition = [
+      currentPosition[0] + dx * ratio,
+      currentPosition[1] + dy * ratio
+    ];
+    if (newPosition.some(coord => isNaN(coord))) {
+      console.error('Ungültige neue Position berechnet:', newPosition);
+      return currentPosition;
+    }
+    return newPosition;
+  } catch (error) {
+    console.error('Fehler in moveTowardsPoint:', error);
+    return currentPosition;
+  }
 }
 
 export default async function (fastify, opts) {
+  if (!global.activeIntervals) {
+    global.activeIntervals = new Map();
+  }
+  
+  // Endpoint zum Starten der Bewegung
   fastify.patch('/move-visitors-continuous', async (request, reply) => {
     try {
-      console.log("PATCH /move-visitors-continuous aufgerufen");
-
-      // Finde die definierte Zone anhand des Namens "Haupttribüne - Dreieck"
-      const zone = await Zone.findOne({ name: "Haupttribüne - Dreieck" });
-      if (!zone) {
-        console.log("Zone 'Haupttribüne - Dreieck' nicht gefunden");
-        return reply.code(404).send({ error: "Zone nicht gefunden" });
-      }
-      console.log("Gefundene Zone:", zone.name);
-
-      // Das Polygon aus der Zone – hier wird angenommen, dass der äußere Ring in zone.area.coordinates[0] steht.
-      // Achte darauf, dass die Koordinaten im GeoJSON-Format vorliegen: [lng, lat]
-      const polygon = zone.area.coordinates[0];
-      console.log("Polygonkoordinaten:", polygon);
-
-      // Alle Besucher abrufen
-      const visitors = await Visitor.find({});
-      console.log(`Anzahl der Besucher: ${visitors.length}`);
-
-      // Definieren Sie die Startkoordinaten
-      const startCoords = [
-        [10.289091, 48.698008],
-        [10.289447, 48.698281],
-        [10.289986, 48.697996],
-        [10.289565, 48.697781]
-      ]; // Beispielkoordinaten aus dem Bereich
-
-      let updatedCount = 0;
-      const maxDistance = 0.5; // maximal 0,5 Meter pro Bewegungsschritt
-
-      for (const visitor of visitors) {
-        console.log(`Verarbeite Besucher: ${visitor.userId}`);
-        // Wählen Sie zufällig eine der Startkoordinaten
-        let currentCoords = startCoords[Math.floor(Math.random() * startCoords.length)];
-        let attempts = 0;
-        const maxAttempts = 100;
-
-        // Generiere einen neuen Punkt, der maximal 0,5 m vom aktuellen Standort entfernt ist,
-        // und prüfe, ob er innerhalb des Polygons liegt.
-        do {
-          currentCoords = randomDestinationPoint(currentCoords[1], currentCoords[0], maxDistance);
-          attempts++;
-        } while (!pointInPolygon(currentCoords, polygon) && attempts < maxAttempts);
-
-        if (attempts < maxAttempts) {
-          console.log(`Besucher ${visitor.userId} bewegt von [${startCoords[0][0]}, ${startCoords[0][1]}] nach [${currentCoords[0]}, ${currentCoords[1]}]`);
-          visitor.location = { type: "Point", coordinates: currentCoords };
-          visitor.lastUpdated = new Date();
-          await visitor.save();
-          updatedCount++;
-        } else {
-          console.warn(`Kein gültiger Punkt für Besucher ${visitor.userId} gefunden nach ${attempts} Versuchen`);
+      console.log("[Start] Kontinuierliche Bewegung der Besucher");
+      // Cleanup vorheriger Intervalle
+      if (global.activeIntervals) {
+        for (const intervalId of global.activeIntervals.values()) {
+          clearInterval(intervalId);
         }
-
-        // Kontinuierliche Bewegung innerhalb des Polygons
-        const intervalId = setInterval(async () => {
-          let newPoint;
-          attempts = 0;
-          do {
-            newPoint = randomDestinationPoint(currentCoords[1], currentCoords[0], maxDistance);
-            attempts++;
-          } while (!pointInPolygon(newPoint, polygon) && attempts < maxAttempts);
-
-          if (attempts < maxAttempts) {
-            console.log(`Besucher ${visitor.userId} bewegt von [${currentCoords[0]}, ${currentCoords[1]}] nach [${newPoint[0]}, ${newPoint[1]}]`);
-            currentCoords = newPoint;
-            visitor.location = { type: "Point", coordinates: currentCoords };
-            visitor.lastUpdated = new Date();
-            await visitor.save();
-          } else {
-            console.warn(`Kein gültiger Punkt für Besucher ${visitor.userId} gefunden nach ${attempts} Versuchen`);
-          }
-        }, 1000); // Bewegung alle 1 Sekunde
-
-        // Stoppen Sie die Bewegung nach einer bestimmten Zeit (z.B. 5 Minuten)
-        setTimeout(() => clearInterval(intervalId), 5 * 60 * 1000);
+        global.activeIntervals.clear();
       }
-
-      console.log(`Bewegung abgeschlossen: ${updatedCount} Besucher aktualisiert.`);
-      reply.send({ message: `Besucher wurden bewegt (${updatedCount} aktualisiert).` });
+      isMovementActive.value = true;
+      // Hole alle existierenden Besucher
+      const visitors = await Visitor.find({}).lean();
+      if (!visitors || visitors.length === 0) {
+        return reply.code(404).send({
+          message: "Keine Besucher gefunden",
+          status: 'error'
+        });
+      }
+      console.log(`${visitors.length} Besucher gefunden`);
+      // Starte Bewegung für jeden Besucher
+      for (const visitor of visitors) {
+        try {
+          // Initialisiere Zielpunkt falls nötig
+          if (!visitor.targetPoint) {
+            await Visitor.updateOne(
+              { _id: visitor._id },
+              { 
+                $set: { 
+                  targetPoint: getRandomPointInPolygon(FIXED_POLYGON),
+                  lastUpdated: new Date()
+                }
+              }
+            );
+          }
+          const moveInterval = setInterval(async () => {
+            if (!isMovementActive.value) {
+              clearInterval(moveInterval);
+              return;
+            }
+            try {
+              const currentVisitor = await Visitor.findById(visitor._id);
+              if (!currentVisitor) {
+                clearInterval(moveInterval);
+                return;
+              }
+              const currentPos = currentVisitor.location.coordinates;
+              let targetPos = currentVisitor.targetPoint;
+              // Wenn Ziel erreicht oder kein Ziel gesetzt, neues Ziel setzen
+              if (!targetPos ||
+                  (Math.abs(currentPos[0] - targetPos[0]) < MOVEMENT_SPEED &&
+                   Math.abs(currentPos[1] - targetPos[1]) < MOVEMENT_SPEED)) {
+                targetPos = getRandomPointInPolygon(FIXED_POLYGON);
+              }
+              // Berechne die neue Position und prüfe, ob sie im Polygon liegt
+              let newPos = moveTowardsPoint(currentPos, targetPos, MOVEMENT_SPEED);
+              if (!pointInPolygon(newPos, FIXED_POLYGON)) {
+                console.warn(`Berechnete Position außerhalb des Polygons (${newPos}). Setze neue Position im gültigen Bereich.`);
+                newPos = getRandomPointInPolygon(FIXED_POLYGON);
+                targetPos = newPos;
+              }
+              // Update nur wenn sich die Position tatsächlich geändert hat
+              if (newPos[0] !== currentPos[0] || newPos[1] !== currentPos[1]) {
+                await Visitor.updateOne(
+                  { _id: visitor._id },
+                  { 
+                    $set: { 
+                      'location.coordinates': newPos,
+                      targetPoint: targetPos,
+                      lastUpdated: new Date()
+                    }
+                  }
+                );
+              }
+            } catch (error) {
+              console.error(`Fehler bei Besucher Update ${visitor._id}:`, error);
+            }
+          }, UPDATE_INTERVAL);
+          global.activeIntervals.set(visitor._id.toString(), moveInterval);
+        } catch (error) {
+          console.error(`Fehler beim Setup für Besucher ${visitor._id}:`, error);
+        }
+      }
+      reply.send({
+        message: `Kontinuierliche Bewegung gestartet für ${visitors.length} Besucher`,
+        activeVisitors: visitors.length,
+        status: 'active'
+      });
     } catch (error) {
-      console.error("Fehler beim Bewegen der Besucher:", error);
-      reply.code(500).send({ error: "Serverfehler" });
+      console.error("Fehler beim Starten der Bewegung:", error);
+      isMovementActive.value = false;
+      reply.code(500).send({
+        message: "Fehler beim Starten der Bewegung",
+        error: error.message
+      });
+    }
+  });
+
+  // Endpoint zum Stoppen der Bewegung
+  fastify.post('/stop-visitors-movement', async (request, reply) => {
+    try {
+      console.log("[Stop] Stoppe Bewegungen");
+      isMovementActive.value = false;
+      const stoppedCount = global.activeIntervals ? global.activeIntervals.size : 0;
+      if (global.activeIntervals) {
+        for (const intervalId of global.activeIntervals.values()) {
+          clearInterval(intervalId);
+        }
+        global.activeIntervals.clear();
+      }
+      reply.send({
+        message: `${stoppedCount} Bewegungen gestoppt`,
+        status: 'stopped'
+      });
+    } catch (error) {
+      console.error("Fehler beim Stoppen:", error);
+      reply.code(500).send({
+        message: "Fehler beim Stoppen der Bewegung",
+        error: error.message
+      });
     }
   });
 }
