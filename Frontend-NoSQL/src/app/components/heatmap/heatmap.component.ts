@@ -108,7 +108,7 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Neues Polygon erstellen und zur Karte hinzufügen
     this.polygon = L.polygon(polygonPoints, {
-      color: 'red',
+      color: 'blue',
       fillColor: 'orange',
       fillOpacity: 0.2
     }).addTo(this.map);
