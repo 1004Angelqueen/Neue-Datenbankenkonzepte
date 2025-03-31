@@ -1,44 +1,41 @@
 <div class="login-container">
-    <h1>Login</h1>
-    
-    <!-- Toggle-Schalter: Besucher oder Admin -->
-    <button (click)="toggleLogin()">
-      {{ isVisitor ? 'Wechsel zu Admin-Login' : 'Wechsel zu Besucher-Login' }}
-    </button>
-    
-    <!-- Besucher-Login -->
-    <div *ngIf="isVisitor">
-      <p>Diese Website erfasst deinen Standort. Bitte bestätige, dass du einwilligst.</p>
-      <form [formGroup]="visitorForm" (ngSubmit)="loginVisitor()">
-        <label>
-          <input type="checkbox" formControlName="consent">
-          Ich stimme der Standorterfassung zu.
-        </label>
-        <button type="submit" [disabled]="!visitorForm.valid">Besucher-Login</button>
-      </form>
-    </div>
-    
-   <!-- Admin-Login -->
-<div *ngIf="!isVisitor">
-  <form [formGroup]="adminForm" (ngSubmit)="loginAdmin()">
-    <div>
-      <label for="userId">Benutzername:</label>
-      <input id="userId" type="text" formControlName="userId">
-    </div>
-    <div>
-      <label for="password">Passwort:</label>
-      <input id="password" type="password" formControlName="password">
-    </div>
-    <div>
-      <label for="role">Rolle:</label>
-      <select id="role" formControlName="role">
-        <option value="" disabled selected>Bitte wählen</option>
-        <option value="Eventveranstalter">Eventveranstalter</option>
-        <option value="Security">Security</option>
-        <option value="Sanitäter">Sanitäter</option>
-        <option value="Standbetreiber">Standbetreiber</option>
-      </select>
-    </div>
-    <button type="submit" [disabled]="!adminForm.valid">Admin-Login</button>
-  </form>
+  <h1>Login</h1>
+  
+  <button (click)="toggleLogin()">
+    {{ isVisitor ? 'Wechsel zu Login' : 'Wechsel zu Besucher-Login' }}
+  </button>
+  
+  <div *ngIf="isVisitor">
+    <p>Diese Website erfasst deinen Standort. Bitte bestätige, dass du einwilligst.</p>
+    <form [formGroup]="visitorForm" (ngSubmit)="loginVisitor()">
+      <label>
+        <input type="checkbox" formControlName="consent">
+        Ich stimme der Standorterfassung zu.
+      </label>
+      <button type="submit" [disabled]="!visitorForm.valid">Besucher-Login</button>
+    </form>
+  </div>
+  
+  <div *ngIf="!isVisitor">
+    <form [formGroup]="adminForm" (ngSubmit)="loginAdmin()">
+      <div>
+        <label for="userId">Benutzername:</label>
+        <input id="userId" type="text" formControlName="userId">
+      </div>
+      <div>
+        <label for="password">Passwort:</label>
+        <input id="password" type="password" formControlName="password">
+      </div>
+      <div>
+        <label for="role">Rolle:</label>
+        <input id="role" 
+               type="text" 
+               formControlName="role" 
+               [value]="userRole" 
+               readonly
+               class="readonly-input">
+      </div>
+      <button type="submit" [disabled]="!adminForm.valid || !userRole">Login</button>
+    </form>
+  </div>
 </div>
