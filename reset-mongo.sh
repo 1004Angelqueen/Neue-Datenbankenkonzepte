@@ -1,8 +1,10 @@
 #!/bin/bash
-mongoimport --host mongo --db geoDB --collection Datenbanken 2 --type json --file /initdb/Datenbanken 2.json --jsonArray
+# Rekursiv durch das initdb-Verzeichnis gehen und alle JSON-Dateien importieren
+find /docker-entrypoint-initdb.d/ -type f -name "*.json" | while read file; do
+  # Datei importieren
+  echo "Importing $file into MongoDB"
+  mongoimport --host mongo --db geoDB --collection brunoCollection --type json --file "$file" --jsonArray
+done
 
-# Lösche alle Daten im MongoDB-Datenverzeichnis
-rm -rf /data/db/*
-echo "Datenbank zurückgesetzt, Initialisierungsskripte werden ausgeführt..."
-# Starte MongoDB, indem das Original-EntryPoint-Skript aufgerufen wird
-exec /usr/local/bin/docker-entrypoint.sh mongod
+# Führe den MongoDB-Daemon aus
+mongod --bind_ip_all

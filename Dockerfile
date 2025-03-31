@@ -1,7 +1,7 @@
 FROM mongo:6.0
 
-# Kopiere den Ordner mit deinen Initialisierungsdaten (z. B. deine Bruno Collection)
-COPY ./initdb /Datenbanke 2.json/
+# Kopiere den Ordner mit deinen Initialisierungsdaten (z. B. deine Bruno Collection)
+COPY ./initdb /docker-entrypoint-initdb.d/
 
 # Kopiere das Reset-Skript in den Container
 COPY reset-mongo.sh /usr/local/bin/reset-mongo.sh
