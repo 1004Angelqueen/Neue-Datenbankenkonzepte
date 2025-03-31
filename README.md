@@ -7,7 +7,7 @@ Allgemein
 
 Dieses Projekt benötigt folgende Software um ausgeführt zu werden: 
 
-- Docker (Version: [bitte Version einfügen])
+- Docker (Version: 28.0.1)
 - Node (Version: 23.1.0)
 
 Diese Versionen wurden zum Entwickeln verwendet, es kann sein, dass das Projekt auch mit anderen
@@ -56,3 +56,18 @@ Gestartet werden kann das Backend mit dem Befehl:
 ```bash
 node index.js
 ```
+
+Zugangsdaten für den Login:
+Eventveranstalter: 
+Benutzername: organizer1 Passwort: deinPasswort
+
+Sanitäter:
+Benutzername: sani1 Passwort: deinPasswort
+
+Standbetreiber:
+Benutzername: standbetreiber123 Passwort: deinPasswort
+
+Security:
+Benutzername: securityUser123 Passwort: dein Passwort
+
+-> Hinweis: Es können auch einzelne Api-Anfragen über Bruno getestet werden. Bruno Collection befindet sich im initdb-Ordner

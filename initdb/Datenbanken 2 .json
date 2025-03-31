@@ -28,179 +28,18 @@
               "mode": "none"
             }
           }
-        }
-      ]
-    },
-    {
-      "type": "folder",
-      "name": "regestierung",
-      "items": [
+        },
         {
           "type": "http",
-          "name": "admin",
+          "name": "test1",
           "seq": 2,
           "request": {
-            "url": "http://localhost:3000/api/login/admin",
+            "url": "http://localhost:3000/api/heatmap",
             "method": "POST",
             "headers": [],
             "params": [],
             "body": {
               "mode": "none",
-              "formUrlEncoded": [],
-              "multipartForm": []
-            },
-            "script": {},
-            "vars": {},
-            "assertions": [],
-            "tests": "",
-            "auth": {
-              "mode": "none"
-            }
-          }
-        },
-        {
-          "type": "http",
-          "name": "usser",
-          "seq": 1,
-          "request": {
-            "url": "http://localhost:3000/api/login/visitor",
-            "method": "POST",
-            "headers": [],
-            "params": [],
-            "body": {
-              "mode": "none",
-              "formUrlEncoded": [],
-              "multipartForm": []
-            },
-            "script": {},
-            "vars": {},
-            "assertions": [],
-            "tests": "",
-            "auth": {
-              "mode": "none"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "folder",
-      "name": "Tracken visotors",
-      "items": [
-        {
-          "type": "http",
-          "name": "testen tracken",
-          "seq": 1,
-          "request": {
-            "url": "http://localhost:3000/api/track",
-            "method": "POST",
-            "headers": [],
-            "params": [],
-            "body": {
-              "mode": "json",
-              "json": "{\n  \"userId\": \"test3\",\n  \"role\": \"visitor\",\n  \"latitude\": 48.697996,\n  \"longitude\": 10.290779\n}\n",
-              "formUrlEncoded": [],
-              "multipartForm": []
-            },
-            "script": {},
-            "vars": {},
-            "assertions": [],
-            "tests": "",
-            "auth": {
-              "mode": "none"
-            }
-          }
-        },
-        {
-          "type": "http",
-          "name": "testen tracken1",
-          "seq": 2,
-          "request": {
-            "url": "http://localhost:3000/api/track",
-            "method": "POST",
-            "headers": [],
-            "params": [],
-            "body": {
-              "mode": "json",
-              "json": "{\n  \"userId\": \"test9\",\n  \"role\": \"visitor\",\n  \"latitude\": 48.698000,\n  \"longitude\": 10.289447\n}\n",
-              "formUrlEncoded": [],
-              "multipartForm": []
-            },
-            "script": {},
-            "vars": {},
-            "assertions": [],
-            "tests": "",
-            "auth": {
-              "mode": "none"
-            }
-          }
-        },
-        {
-          "type": "http",
-          "name": "Besucher Außerhalb",
-          "seq": 3,
-          "request": {
-            "url": "http://localhost:3000/api/track",
-            "method": "POST",
-            "headers": [],
-            "params": [],
-            "body": {
-              "mode": "json",
-              "json": "[\n  {\n    \"userId\": \"visitorAlpha\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698000,\n    \"longitude\": 10.289447\n  },\n  {\n    \"userId\": \"visitorBravo\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698100,\n    \"longitude\": 10.289400\n  },\n  {\n    \"userId\": \"visitorCharlie\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698200,\n    \"longitude\": 10.289350\n  },\n  {\n    \"userId\": \"visitorDelta\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698300,\n    \"longitude\": 10.289300\n  },\n  {\n    \"userId\": \"visitorEcho\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698400,\n    \"longitude\": 10.289250\n  },\n  {\n    \"userId\": \"visitorFoxtrot\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698500,\n    \"longitude\": 10.289200\n  },\n  {\n    \"userId\": \"visitorGolf\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698600,\n    \"longitude\": 10.289150\n  },\n  {\n    \"userId\": \"visitorHotel\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698700,\n    \"longitude\": 10.289100\n  },\n  {\n    \"userId\": \"visitorIndia\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698800,\n    \"longitude\": 10.289050\n  },\n  {\n    \"userId\": \"visitorJuliet\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698900,\n    \"longitude\": 10.289000\n  },\n  {\n    \"userId\": \"visitorKilo\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699000,\n    \"longitude\": 10.288950\n  },\n  {\n    \"userId\": \"visitorLima\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699100,\n    \"longitude\": 10.288900\n  },\n  {\n    \"userId\": \"visitorMike\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699200,\n    \"longitude\": 10.288850\n  },\n  {\n    \"userId\": \"visitorNovember\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699300,\n    \"longitude\": 10.288800\n  },\n  {\n    \"userId\": \"visitorOscar\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699400,\n    \"longitude\": 10.288750\n  },\n  {\n    \"userId\": \"visitorPapa\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699500,\n    \"longitude\": 10.288700\n  },\n  {\n    \"userId\": \"visitorQuebec\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699600,\n    \"longitude\": 10.288650\n  },\n  {\n    \"userId\": \"visitorRomeo\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699700,\n    \"longitude\": 10.288600\n  },\n  {\n    \"userId\": \"visitorSierra\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699800,\n    \"longitude\": 10.288550\n  },\n  {\n    \"userId\": \"visitorTango\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699900,\n    \"longitude\": 10.288500\n  }\n]\n",
-              "formUrlEncoded": [],
-              "multipartForm": []
-            },
-            "script": {},
-            "vars": {},
-            "assertions": [],
-            "tests": "",
-            "auth": {
-              "mode": "none"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "folder",
-      "name": "zones",
-      "items": [
-        {
-          "type": "http",
-          "name": "zonehinzuf-gen eingang",
-          "seq": 2,
-          "request": {
-            "url": "http://localhost:3000/api/zones",
-            "method": "POST",
-            "headers": [],
-            "params": [],
-            "body": {
-              "mode": "json",
-              "json": "{\n  \"name\": \"Eingang - Viereck\",\n    \"capacity\": 4,\n  \"area\": {\n    \"type\": \"Polygon\",\n    \"coordinates\": [[\n      [10.289091,48.698008],\n      [10.289447,48.698281],\n      [10.289986,48.697996],\n      [10.289565,48.697781],\n      [10.289091,48.698008]\n\n    ]]\n  }\n}\n",
-              "formUrlEncoded": [],
-              "multipartForm": []
-            },
-            "script": {},
-            "vars": {},
-            "assertions": [],
-            "tests": "",
-            "auth": {
-              "mode": "none"
-            }
-          }
-        },
-        {
-          "type": "http",
-          "name": "zonehinzuf-gen",
-          "seq": 1,
-          "request": {
-            "url": "http://localhost:3000/api/zones",
-            "method": "POST",
-            "headers": [],
-            "params": [],
-            "body": {
-              "mode": "json",
-              "json": "{\n  \"name\": \"Haupttribüne - Dreieck\",\n  \"capacity\": 4,\n  \"area\": {\n    \"type\": \"Polygon\",\n    \"coordinates\": [[\n      [10.290779, 48.696516],\n      [10.290297, 48.696800],\n      [10.290514, 48.696966],\n      [10.291104, 48.696640],\n      [10.290779, 48.696516]\n    ]]\n  }\n}\n",
               "formUrlEncoded": [],
               "multipartForm": []
             },
@@ -277,6 +116,556 @@
             "params": [],
             "body": {
               "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "regestierung",
+      "items": [
+        {
+          "type": "http",
+          "name": "admin",
+          "seq": 2,
+          "request": {
+            "url": "http://localhost:3000/api/login/admin",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"userId\": \"standbetreiberUser123\",\n  \"password\": \"deinPasswort\",\n  \"role\": \"Standbetreiber\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "usser",
+          "seq": 1,
+          "request": {
+            "url": "http://localhost:3000/api/login/visitor",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Standbetreiber",
+          "seq": 3,
+          "request": {
+            "url": "http://localhost:3000/api/login/admin",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Sanitäter",
+          "seq": 4,
+          "request": {
+            "url": "http://localhost:3000/api/login/admin",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"userId\": \"sani1\",\n  \"password\": \"deinPasswort\",\n  \"role\": \"Security\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Security",
+          "seq": 5,
+          "request": {
+            "url": "http://localhost:3000/api/login/admin",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"userId\": \"securityUser123\",\n  \"password\": \"deinPasswort\",\n  \"role\": \"Security\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Tracken visotors",
+      "items": [
+        {
+          "type": "http",
+          "name": "testen tracken",
+          "seq": 1,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "      {\n        \"userId\": \"besucher5\",\n        \"role\": \"visitor\",\n        \"latitude\": 48.698200,\n        \"longitude\": 10.289350\n      }\n",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "testen tracken1",
+          "seq": 2,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "  {\n    \"userId\": \"besucher4\",\n    \"role\": \"visitor\",\n    \"latitude\": 48.698240,\n    \"longitude\": 10.289370\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "visitor 8",
+          "seq": 3,
+          "request": {
+            "url": "",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "  {\n    \"userId\": \"besucher9\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698280,\n    \"longitude\": 10.289370\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Test user 3",
+          "seq": 4,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "  {\n    \"userId\": \"besucher2\",\n    \"role\": \"visitor\",\n    \"latitude\": 48.698210,\n    \"longitude\": 10.289360\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "testen tracken2",
+          "seq": 5,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"userId\": \"test3\",\n  \"role\": \"visitor\",\n  \"latitude\": 48.697996,\n  \"longitude\": 10.290779\n}",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "testen tracken3",
+          "seq": 6,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"userId\": \"tesetw21ddddseerrdsss9\",\n  \"role\": \"visitor\",\n  \"latitude\": 48.698000,\n  \"longitude\": 10.289447\n}",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "testen tracken5",
+          "seq": 7,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": " {\n    \"userId\": \"besucher11\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.699000,\n    \"longitude\": 10.290000\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "testen tracken8",
+          "seq": 8,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": " {\n    \"userId\": \"besucher10\",\n    \"role\": \"Besucher\",\n    \"latitude\": 48.698290,\n    \"longitude\": 10.289355\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "zones",
+      "items": [
+        {
+          "type": "http",
+          "name": "zonehinzuf-gen eingang",
+          "seq": 2,
+          "request": {
+            "url": "http://localhost:3000/api/zones",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"name\": \"Eingang - Viereck\",\n    \"capacity\": 4,\n  \"area\": {\n    \"type\": \"Polygon\",\n    \"coordinates\": [[\n      [10.289091,48.698008],\n      [10.289447,48.698281],\n      [10.289986,48.697996],\n      [10.289565,48.697781],\n      [10.289091,48.698008]\n\n    ]]\n  }\n}\n",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "zonehinzuf-gen",
+          "seq": 1,
+          "request": {
+            "url": "http://localhost:3000/api/zones",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"name\": \"Haupttribüne - Dreieck\",\n  \"capacity\": 4,\n  \"area\": {\n    \"type\": \"Polygon\",\n    \"coordinates\": [[\n      [10.290779, 48.696516],\n      [10.290297, 48.696800],\n      [10.290514, 48.696966],\n      [10.291104, 48.696640],\n      [10.290779, 48.696516]\n    ]]\n  }\n}\n",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Tracken Veranstalter und KRäfte",
+      "items": [
+        {
+          "type": "http",
+          "name": "Sanitäter 1",
+          "seq": 1,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "  {\n    \"userId\": \"sanitaeter1\",\n    \"role\": \"Sanitäter\",\n    \"latitude\": 48.69705,\n    \"longitude\": 10.29035\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Sanitäter 2",
+          "seq": 2,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n    \"userId\": \"sanitaeter2\",\n    \"role\": \"Sanitäter\",\n    \"latitude\": 48.698220,\n    \"longitude\": 10.289370\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Security 1",
+          "seq": 3,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "  {\n    \"userId\": \"security1\",\n    \"role\": \"Security\",\n    \"latitude\": 48.69715,\n    \"longitude\": 10.29040\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Security 2",
+          "seq": 4,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n    \"userId\": \"security2\",\n    \"role\": \"Security\",\n    \"latitude\": 48.69700,\n    \"longitude\": 10.29030\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Standbetreiber 1",
+          "seq": 5,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": " {\n    \"userId\": \"standbetreiber1\",\n    \"role\": \"Standbetreiber\",\n    \"latitude\": 48.69720,\n    \"longitude\": 10.29050\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Standbetreiber 2",
+          "seq": 6,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": " {\n    \"userId\": \"standbetreiber2\",\n    \"role\": \"Standbetreiber\",\n    \"latitude\": 48.69705,\n    \"longitude\": 10.29055\n  }",
+              "formUrlEncoded": [],
+              "multipartForm": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Eventveranstalter",
+          "seq": 7,
+          "request": {
+            "url": "http://localhost:3000/api/track",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "  {\n    \"userId\": \"eventveranstalter1\",\n    \"role\": \"Eventveranstalter\",\n    \"latitude\": 48.69710,\n    \"longitude\": 10.29040\n  }\n",
               "formUrlEncoded": [],
               "multipartForm": []
             },
