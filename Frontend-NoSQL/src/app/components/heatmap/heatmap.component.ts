@@ -231,7 +231,7 @@ private addColoredMarkers(): void {
         // Bestehende Polygone entfernen
         if (this.map) {
           this.map.eachLayer((layer: any) => {
-            if (layer instanceof L.Polygon) {
+            if (layer instanceof L.Polygon && layer !== this.polygon) {
               this.map.removeLayer(layer);
             }
           });
