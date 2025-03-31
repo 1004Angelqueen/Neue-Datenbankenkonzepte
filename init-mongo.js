@@ -1,14 +1,22 @@
-// Current Date and Time (UTC): 2025-03-31 21:24:16
+// Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-03-31 21:32:32
 // Current User's Login: 1004Angelqueen
 
 // Create database and switch to it
 db = db.getSiblingDB('eventDB');
 
+// Drop existing collections
+db.emergencies.drop();
+db.incidents.drop();
+db.locations.drop();
+db.visitors.drop();
+db.zones.drop();
+
 // Create collections
-db.createCollection('zones');
 db.createCollection('emergencies');
-db.createCollection('tracks');
-db.createCollection('users');
+db.createCollection('incidents');
+db.createCollection('locations');
+db.createCollection('visitors');
+db.createCollection('zones');
 
 // Insert zone data - exactly as specified in your JSON
 db.zones.insertMany([
@@ -42,8 +50,8 @@ db.zones.insertMany([
   }
 ]);
 
-// Insert tracking data for visitors
-db.tracks.insertMany([
+// Insert visitor tracking data
+db.locations.insertMany([
   {
     userId: "besucher5",
     role: "visitor",
@@ -94,8 +102,8 @@ db.tracks.insertMany([
   }
 ]);
 
-// Insert tracking data for staff (Sanitäter, Security, Standbetreiber, Eventveranstalter)
-db.tracks.insertMany([
+// Insert staff tracking data
+db.locations.insertMany([
   {
     userId: "sanitaeter1",
     role: "Sanitäter",
@@ -140,8 +148,8 @@ db.tracks.insertMany([
   }
 ]);
 
-// Insert user authentication data
-db.users.insertMany([
+// Insert visitor authentication data
+db.visitors.insertMany([
   {
     userId: "standbetreiberUser123",
     role: "Standbetreiber",
@@ -164,7 +172,7 @@ db.users.insertMany([
   }
 ]);
 
-// Create sample emergency data based on your emergency endpoint
+// Create sample emergency data
 db.emergencies.insertMany([
   {
     lat: 48.6977,
@@ -174,15 +182,14 @@ db.emergencies.insertMany([
 ]);
 
 // Create indexes for better query performance
-db.tracks.createIndex({ userId: 1 });
-db.tracks.createIndex({ role: 1 });
+db.locations.createIndex({ userId: 1 });
+db.locations.createIndex({ role: 1 });
+db.locations.createIndex({ "latitude": 1, "longitude": 1 });
 db.zones.createIndex({ "area": "2dsphere" });
 db.emergencies.createIndex({ timestamp: 1 });
-db.users.createIndex({ userId: 1 }, { unique: true });
-db.users.createIndex({ role: 1 });
-
-// Additional necessary indexes for geospatial queries
-db.tracks.createIndex({ "latitude": 1, "longitude": 1 });
 db.emergencies.createIndex({ "lat": 1, "lng": 1 });
+db.visitors.createIndex({ userId: 1 }, { unique: true });
+db.visitors.createIndex({ role: 1 });
+db.incidents.createIndex({ timestamp: 1 });
 
 print('Database initialization completed');
