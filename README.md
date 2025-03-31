@@ -1,4 +1,4 @@
-````markdown
+
 # Neue-Datenbankenkonzepte
 
 Installation 
@@ -8,7 +8,7 @@ Allgemein
 Dieses Projekt benötigt folgende Software um ausgeführt zu werden: 
 
 - Docker (Version: [bitte Version einfügen])
-- Node (Version: [bitte Version einfügen])
+- Node (Version: 23.1.0)
 
 Diese Versionen wurden zum Entwickeln verwendet, es kann sein, dass das Projekt auch mit anderen
 Versionen funktioniert.
