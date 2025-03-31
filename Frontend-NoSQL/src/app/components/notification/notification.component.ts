@@ -30,6 +30,7 @@ export class NotificationComponent implements OnInit, OnDestroy {
         // Verarbeite verschiedene Nachrichtentypen
         if (message.type === 'echo' && message.data) {
           // Verarbeite Zone-Status Benachrichtigungen
+
           if (message.data.zoneId && message.data.currentVisitors !== undefined) {
             const zone = message.data;
             const capacity = (zone.currentVisitors / zone.maxCapacity) * 100;
@@ -84,7 +85,7 @@ export class NotificationComponent implements OnInit, OnDestroy {
     }
 
     this.snackBar.open(message, 'Schließen', {
-      duration: 5000,
+      duration: 50000,
       horizontalPosition: 'right',
       verticalPosition: 'top',
       panelClass: panelClass
