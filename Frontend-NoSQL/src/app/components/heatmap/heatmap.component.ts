@@ -63,29 +63,51 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
       error: (err) => console.error('Fehler beim Laden der Daten:', err)
     });
   }
-  // NEU: Methode zum Filtern der Besucherdaten basierend auf der Benutzerrolle
   private filterVisitorData(): any[] {
     const role = localStorage.getItem('role')?.toLowerCase() || '';
     const currentUserId = localStorage.getItem('userId') || '';
     
-    if (role === 'eventveranstalter') {
-      // Eventveranstalter sieht alle Besucher
-      return this.visitorData;
-    } else if (role === 'security') {
-      // Security sieht nur Einträge mit Rolle "security" oder "visitor"
-      return this.visitorData.filter(v =>
-        v.role.toLowerCase() === 'security' || v.role.toLowerCase() === 'visitor'
-      );
-    } else if (role === 'standbetreiber' || role === 'sanitäter') {
-      // Standbetreiber und Sanitäter sehen sich selbst und alle "visitor"
-      return this.visitorData.filter(v =>
-        v.userId === currentUserId || v.role.toLowerCase() === 'visitor'
-      );
-    } else if (role === 'visitor') {
-      // Besucher sehen nur sich selbst
-      return this.visitorData.filter(v => v.userId === currentUserId);
+    console.log('Aktuelle Rolle:', role);
+    console.log('Aktueller User:', currentUserId);
+  
+    switch(role) {
+      case 'eventveranstalter':
+        // Eventveranstalter sieht alle
+        return this.visitorData;
+        
+      case 'security':
+        // Security sieht sich selbst und alle Besucher
+        return this.visitorData.filter(v => 
+          v.role.toLowerCase() === 'security' || 
+          v.role.toLowerCase() === 'besucher'||
+          v.role.toLowerCase() === 'visitor'
+
+        );
+        
+      case 'sanitäter':
+        // Sanitäter sieht sich selbst und alle Besucher
+        return this.visitorData.filter(v => 
+          v.role.toLowerCase() === 'sanitäter' || 
+            v.role.toLowerCase() === 'besucher'||
+          v.role.toLowerCase() === 'visitor'
+        );
+        
+      case 'standbetreiber':
+        // Standbetreiber sieht sich selbst und alle Besucher
+        return this.visitorData.filter(v => 
+          v.role.toLowerCase() === 'standbetreiber' || 
+            v.role.toLowerCase() === 'besucher'||
+          v.role.toLowerCase() === 'visitor'
+        );
+        
+      case 'besucher':
+        // Besucher sieht NUR sich selbst
+        return this.visitorData.filter(v => v.userId === currentUserId);
+        
+      default:
+        // Wenn keine Rolle oder unbekannte Rolle, sieht man nichts
+        return [];
     }
-    return [];
   }
   private updateHeatmap(): void {
     if (!this.map) return;
@@ -108,7 +130,7 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Neues Polygon erstellen und zur Karte hinzufügen
     this.polygon = L.polygon(polygonPoints, {
-      color: 'blue',
+      color: 'red',
       fillColor: 'orange',
       fillOpacity: 0.2
     }).addTo(this.map);
@@ -142,8 +164,18 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 // NEU: Methode zum Hinzufügen farbiger Marker basierend auf der Rolle
 private addColoredMarkers(): void {
-  // Iteriere über alle Besucher und füge einen Marker mit farblicher Unterscheidung hinzu
-  this.visitorData.forEach(visitor => {
+  // Zuerst alle bestehenden Marker entfernen
+  this.map.eachLayer((layer: any) => {
+    if (layer instanceof L.CircleMarker) {
+      this.map.removeLayer(layer);
+    }
+  });
+
+  // Gefilterte Daten verwenden statt direkt visitorData
+  const filteredData = this.filterVisitorData();
+  
+  // Iteriere über die gefilterten Daten
+  filteredData.forEach(visitor => {
     if (visitor.location?.coordinates) {
       const lat = visitor.location.coordinates[1];
       const lng = visitor.location.coordinates[0];
@@ -157,7 +189,10 @@ private addColoredMarkers(): void {
         case 'Security':
           color = 'red';
           break;
-        case 'Vierte':
+        case 'Sanitäter':
+          color = 'yellow';
+          break;
+        case 'Standbetreiber':
           color = 'orange';
           break;
         case 'Besucher':
@@ -168,12 +203,10 @@ private addColoredMarkers(): void {
 
       let radius = 8;
 
-      // Wenn der Besucher tatsächlich anwesend ist, mache den Marker kleiner
-      // Hier als Beispiel: falls visitor.currentVisitors > 0, wird der Radius auf 4 gesetzt
       if (visitor.currentVisitors !== undefined && visitor.currentVisitors > 0) {
         radius = 4;
       }
-      // Erstelle einen CircleMarker mit dynamisch angepasstem Radius
+
       const marker = L.circleMarker([lat, lng], {
         radius: radius,
         fillColor: color,
@@ -183,8 +216,8 @@ private addColoredMarkers(): void {
         fillOpacity: 0.8
       }).addTo(this.map);
 
-      // Optionale Popup-Info
-      marker.bindPopup(`Rolle: ${visitor.role}`);
+      // Erweiterte Popup-Info
+      marker.bindPopup(`Rolle: ${visitor.role}<br>ID: ${visitor.userId}`);
     }
   });
 }
