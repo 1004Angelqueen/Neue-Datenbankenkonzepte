@@ -11,6 +11,7 @@ import moveRoute from './routes/moveroute.js';
 
 import emergencyRoute from './routes/emergencyroute.js';
 import incidentsRoutes from './routes/incidents.js';
+import exportRoute from './routes/export.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -124,6 +125,7 @@ fastify.register(authRoutes, { prefix: '/api' });
 fastify.register(emergencyRoute, { prefix: '/api' });
 fastify.register(incidentsRoutes, { prefix: '/api' });
 fastify.register(moveRoute, {prefix: '/api'});
+fastify.register(exportRoute, { prefix: '/api' });
 
 // Server starten
 fastify.listen({ port: 3000 }, err => {
@@ -133,6 +135,7 @@ fastify.listen({ port: 3000 }, err => {
   }
   fastify.log.info('Server läuft auf Port 3000');
 });
+
 
 // Cleanup bei Server-Beendigung
 process.on('SIGTERM', () => {

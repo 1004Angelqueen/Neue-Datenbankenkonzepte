@@ -1,4 +1,3 @@
-// src/app/components/login/login.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -13,12 +12,22 @@ import { Router } from '@angular/router';
   imports: [CommonModule, ReactiveFormsModule]
 })
 export class LoginComponent {
-  // Visitor-Form: nur Consent wird abgefragt
   visitorForm: FormGroup;
-  // Admin-Form: benötigt userId, password und role
   adminForm: FormGroup;
-  // Toggle zwischen Besucher- und Admin-Login
   isVisitor: boolean = true;
+  userRole: string = '';
+
+  // Mapping von Benutzer-IDs zu Rollen
+  private readonly userRoles: { [key: string]: string } = {
+    'securityUser123': 'Security',
+    'security2': 'Security',
+    'organizer1': 'Eventveranstalter',
+    'event2': 'Eventveranstalter',
+    'sani1': 'Sanitäter',
+    'sani2': 'Sanitäter',
+    'standbetreiberUser123': 'Standbetreiber',
+    'stand2': 'Standbetreiber'
+  };
 
   constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     this.visitorForm = this.fb.group({
@@ -28,11 +37,22 @@ export class LoginComponent {
     this.adminForm = this.fb.group({
       userId: ['', Validators.required],
       password: ['', Validators.required],
-      role: ['', Validators.required]
+      role: [{ value: '', disabled: true }] // Deaktiviertes Rollenfeld
+    });
+
+    // Überwache Änderungen der userId
+    this.adminForm.get('userId')?.valueChanges.subscribe(userId => {
+      this.updateUserRole(userId);
     });
   }
 
-  // Besucher-Login
+  // Aktualisiere die Rolle basierend auf der userId
+  private updateUserRole(userId: string): void {
+    const role = this.userRoles[userId];
+    this.userRole = role || '';
+    this.adminForm.patchValue({ role: this.userRole });
+  }
+
   loginVisitor(): void {
     if (this.visitorForm.valid) {
       this.authService.loginVisitor().subscribe(
@@ -40,24 +60,28 @@ export class LoginComponent {
           console.log('Besucher-Login erfolgreich:', data);
           localStorage.setItem('token', data.token);
           localStorage.setItem('userId', data.userId);
-          localStorage.setItem('role', data.role);
-          this.router.navigate(['/dashboard']); // Passe an, wohin navigiert werden soll
+          localStorage.setItem('role', 'Besucher');
+          this.router.navigate(['/dashboard']);
         },
         err => console.error('Fehler beim Besucher-Login:', err)
       );
     }
   }
 
-  // Admin-Login
   loginAdmin(): void {
-    if (this.adminForm.valid) {
-      const credentials = this.adminForm.value;
+    if (this.adminForm.valid && this.userRole) {
+      const credentials = {
+        userId: this.adminForm.get('userId')?.value,
+        password: this.adminForm.get('password')?.value,
+        role: this.userRole
+      };
+      
       this.authService.loginAdmin(credentials).subscribe(
         data => {
           console.log('Admin-Login erfolgreich:', data);
           localStorage.setItem('token', data.token);
-          localStorage.setItem('userId', data.userId);
-          localStorage.setItem('role', data.role);
+          localStorage.setItem('userId', credentials.userId);
+          localStorage.setItem('role', this.userRole);
           this.router.navigate(['/dashboard']);
         },
         err => console.error('Fehler beim Admin-Login:', err)
@@ -65,7 +89,6 @@ export class LoginComponent {
     }
   }
 
-  // Umschalten zwischen den Login-Modi
   toggleLogin(): void {
     this.isVisitor = !this.isVisitor;
   }
