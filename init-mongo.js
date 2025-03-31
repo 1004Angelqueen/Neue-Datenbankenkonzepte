@@ -1,3 +1,6 @@
+// Current Date and Time (UTC): 2025-03-31 21:24:16
+// Current User's Login: 1004Angelqueen
+
 // Create database and switch to it
 db = db.getSiblingDB('eventDB');
 
@@ -155,10 +158,10 @@ db.users.insertMany([
     password: "deinPasswort"
   },
   {
-  userId: "organizer1",
+    userId: "organizer1",
     role: "Eventveranstalter",
-  password: "deinPaswort"
-}
+    password: "deinPaswort"
+  }
 ]);
 
 // Create sample emergency data based on your emergency endpoint
@@ -176,3 +179,10 @@ db.tracks.createIndex({ role: 1 });
 db.zones.createIndex({ "area": "2dsphere" });
 db.emergencies.createIndex({ timestamp: 1 });
 db.users.createIndex({ userId: 1 }, { unique: true });
+db.users.createIndex({ role: 1 });
+
+// Additional necessary indexes for geospatial queries
+db.tracks.createIndex({ "latitude": 1, "longitude": 1 });
+db.emergencies.createIndex({ "lat": 1, "lng": 1 });
+
+print('Database initialization completed');
