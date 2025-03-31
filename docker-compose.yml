@@ -1,7 +1,7 @@
 services:
   mongodb:
     build: .
-    container_name: my-mongo-container
+    container_name: mongodb
     ports:
       - "27017:27017"
     environment:
