@@ -1,10 +1,13 @@
-version: '3.8'
 services:
   mongodb:
-    image: mongo:latest
+    build: .
+    container_name: my-mongo-container
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: eventDB
     volumes:
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
