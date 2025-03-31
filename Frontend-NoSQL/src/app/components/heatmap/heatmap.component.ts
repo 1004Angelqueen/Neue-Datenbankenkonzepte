@@ -32,8 +32,8 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadInitialData();
     this.loadZones();
-    // Timer, der alle 5 Sekunden die Daten neu lädt
-    this.reloadSubscription = interval(5000).subscribe(() => {
+    // Timer, der alle 60 Sekunden die Daten neu lädt
+    this.reloadSubscription = interval(60000).subscribe(() => {
       this.loadInitialData();
       this.loadZones();
       this.addColoredMarkers();
