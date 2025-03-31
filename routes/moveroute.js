@@ -1,4 +1,5 @@
 import Visitor from '../models/Visitor.js';
+import Zone from '../models/Zone.js'; // Zone-Modell importieren
 
 // Konstanten
 const isMovementActive = { value: false };
@@ -176,6 +177,18 @@ export default async function (fastify, opts) {
                 newPos = getRandomPointInPolygon(FIXED_POLYGON);
                 targetPos = newPos;
               }
+              // Hier wird zusätzlich die Zone basierend auf der neuen Position aktualisiert
+              const zone = await Zone.findOne({
+                area: {
+                  $geoIntersects: {
+                    $geometry: {
+                      type: "Point",
+                      coordinates: newPos
+                    }
+                  }
+                }
+              });
+              const zoneName = zone ? zone.name : 'Unbekannt';
               // Update nur wenn sich die Position tatsächlich geändert hat
               if (newPos[0] !== currentPos[0] || newPos[1] !== currentPos[1]) {
                 await Visitor.updateOne(
@@ -184,6 +197,7 @@ export default async function (fastify, opts) {
                     $set: { 
                       'location.coordinates': newPos,
                       targetPoint: targetPos,
+                      zone: zoneName,  // Zone aktualisieren
                       lastUpdated: new Date()
                     }
                   }
