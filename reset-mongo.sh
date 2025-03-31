@@ -1,5 +1,5 @@
 #!/bin/bash
-mongoimport --host mongo --db geoDB --collection brunoCollection --type json --file /docker-entrypoint-initdb.d/brunoCollection.json --jsonArray
+mongoimport --host mongo --db geoDB --collection Datenbanken 2 --type json --file /initdb/Datenbanken 2.json --jsonArray
 
 # Lösche alle Daten im MongoDB-Datenverzeichnis
 rm -rf /data/db/*
