@@ -1,10 +1,9 @@
 #!/bin/bash
-# Rekursiv durch das initdb-Verzeichnis gehen und alle JSON-Dateien importieren
-find /docker-entrypoint-initdb.d/ -type f -name "*.json" | while read file; do
-  # Datei importieren
-  echo "Importing $file into MongoDB"
-  mongoimport --host mongo --db geoDB --collection brunoCollection --type json --file "$file" --jsonArray
-done
+# Lösche existierende Datenbank
+mongosh --eval "db.getSiblingDB('eventDB').dropDatabase()"
 
-# Führe den MongoDB-Daemon aus
-mongod --bind_ip_all
+# Führe Initialisierungsskript aus
+mongosh eventDB /docker-entrypoint-initdb.d/init-mongo.js
+
+# Starte normalen MongoDB-Prozess
+exec docker-entrypoint.sh mongod

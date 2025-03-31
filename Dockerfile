@@ -1,15 +1,16 @@
 FROM mongo:6.0
 
-# Kopiere den Ordner mit deinen Initialisierungsdaten (z. B. deine Bruno Collection)
-COPY ./initdb /docker-entrypoint-initdb.d/
+# Kopiere die Initialisierungsdatei und das Reset-Skript
+COPY init-mongo.js /docker-entrypoint-initdb.d/
+COPY reset-mongo.sh /usr/local/bin/
 
-# Kopiere das Reset-Skript in den Container
-COPY reset-mongo.sh /usr/local/bin/reset-mongo.sh
-
-# Setze Ausführungsrechte für das Skript
+# Setze Ausführungsrechte für das Reset-Skript
 RUN chmod +x /usr/local/bin/reset-mongo.sh
 
-# Setze das Reset-Skript als EntryPoint
-ENTRYPOINT ["/usr/local/bin/reset-mongo.sh"]
+# Setze Umgebungsvariablen
+ENV MONGO_INITDB_DATABASE=eventDB
 
 EXPOSE 27017
+
+# Verwende das Reset-Skript als Entrypoint
+ENTRYPOINT ["/usr/local/bin/reset-mongo.sh"]
