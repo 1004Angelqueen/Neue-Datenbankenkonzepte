@@ -3,32 +3,44 @@ import mongoose from 'mongoose';
 const exportRoute = async (fastify, opts) => {
   fastify.get('/export-data', async (request, reply) => {
     try {
-      // Collections über Mongoose abfragen
-      const [tracking, zones] = await Promise.all([
-        mongoose.connection.collection('tracking').find({}).toArray(),
-        mongoose.connection.collection('zones').find({}).toArray()
-      ]);
+      // Aktuelles Datum im gewünschten Format
+      const currentDate = new Date().toISOString()
+        .replace('T', ' ')
+        .slice(0, 19);
+
+      // Mongoose Modelle verwenden
+      const tracking = await mongoose.connection.db.collection('tracking').find({}).toArray();
+      const zones = await mongoose.connection.db.collection('zones').find({}).toArray();
+      const events = await mongoose.connection.db.collection('events').find({}).toArray();
+      const heatmap = await mongoose.connection.db.collection('heatmap').find({}).toArray();
 
       const exportData = {
         metadata: {
-          exportDate: new Date().toISOString()
-            .replace('T', ' ')
-            .substr(0, 19),
-          exportedBy: "admin_user",
-          exportType: 'event-data'
+          timestamp: currentDate,
+          user: "admin_user",
+          type: 'event-data'
         },
         data: {
-          tracking,
-          zones
+          tracking: tracking,
+          zones: zones,
+          events: events,
+          heatmap: heatmap,
+          statistics: {
+            totalTracking: tracking.length,
+            totalZones: zones.length,
+            totalEvents: events.length,
+            totalHeatmapPoints: heatmap.length
+          }
         }
       };
 
       return reply.send(exportData);
     } catch (error) {
-      request.log.error('Export-Fehler:', error);
+      fastify.log.error('Export-Fehler:', error);
       return reply.code(500).send({ 
-        error: 'Fehler beim Exportieren der Daten',
-        message: error.message 
+        error: 'Export fehlgeschlagen',
+        message: error.message,
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19)
       });
     }
   });
