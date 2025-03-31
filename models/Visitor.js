@@ -4,7 +4,7 @@ const visitorSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['Eventveranstalter', 'Besucher', 'Security', 'Sanitäter', 'Standbetreiber'], 
+    enum: ['Eventveranstalter', 'Besucher', 'Security', 'Sanitäter', 'Standbetreiber','visitor'], 
     required: true 
   },
   location: {

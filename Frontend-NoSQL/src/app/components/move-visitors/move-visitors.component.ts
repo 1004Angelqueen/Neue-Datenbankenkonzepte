@@ -30,7 +30,7 @@ export class MoveVisitorsComponent implements OnInit, OnDestroy {
     if (!this.movementActive) {
       this.movementActive = true;
       this.message = 'Bewegung läuft...';
-      this.movementSub = interval(1000).pipe(
+      this.movementSub = interval(3000).pipe(
         switchMap(() => this.movementService.moveVisitors())
       ).subscribe({
         next: (res: any) => {
@@ -48,6 +48,7 @@ export class MoveVisitorsComponent implements OnInit, OnDestroy {
     if (this.movementActive) {
       this.movementActive = false;
       if (this.movementSub) {
+        console.log('Bewegung gestoppt. Unsubscribing...');
         this.movementSub.unsubscribe();
       }
       this.message = 'Bewegung gestoppt';

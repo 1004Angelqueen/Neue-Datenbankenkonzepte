@@ -1,8 +1,7 @@
 import Visitor from '../models/Visitor.js';
 import Zone from '../models/Zone.js';
 
-// Funktion: Berechnet einen zufälligen Zielpunkt, der maximal maxDistance (in Metern)
-// vom Ausgangspunkt (lat, lng) entfernt ist.
+// Funktion: Berechnet einen zufälligen Zielpunkt, der maximal maxDistance (in Metern) vom Ausgangspunkt (lat, lng) entfernt ist.
 function randomDestinationPoint(lat, lng, maxDistance) {
   console.log(`Berechne neuen Punkt für (lat: ${lat}, lng: ${lng}) mit maxDistance: ${maxDistance}m`);
   const R = 6371000; // Erdradius in Metern
@@ -63,36 +62,63 @@ export default async function (fastify, opts) {
       const visitors = await Visitor.find({});
       console.log(`Anzahl der Besucher: ${visitors.length}`);
 
+      // Definieren Sie die Startkoordinaten
+      const startCoords = [
+        [10.289091, 48.698008],
+        [10.289447, 48.698281],
+        [10.289986, 48.697996],
+        [10.289565, 48.697781]
+      ]; // Beispielkoordinaten aus dem Bereich
+
       let updatedCount = 0;
       const maxDistance = 0.5; // maximal 0,5 Meter pro Bewegungsschritt
 
       for (const visitor of visitors) {
         console.log(`Verarbeite Besucher: ${visitor.userId}`);
-        // Aktueller Standort im GeoJSON-Format: [lng, lat]
-        const currentCoords = visitor.location.coordinates;
-        const currentLng = currentCoords[0];
-        const currentLat = currentCoords[1];
-
-        let newPoint = [currentLng, currentLat];
+        // Wählen Sie zufällig eine der Startkoordinaten
+        let currentCoords = startCoords[Math.floor(Math.random() * startCoords.length)];
         let attempts = 0;
         const maxAttempts = 100;
 
         // Generiere einen neuen Punkt, der maximal 0,5 m vom aktuellen Standort entfernt ist,
         // und prüfe, ob er innerhalb des Polygons liegt.
         do {
-          newPoint = randomDestinationPoint(currentLat, currentLng, maxDistance);
+          currentCoords = randomDestinationPoint(currentCoords[1], currentCoords[0], maxDistance);
           attempts++;
-        } while (!pointInPolygon(newPoint, polygon) && attempts < maxAttempts);
+        } while (!pointInPolygon(currentCoords, polygon) && attempts < maxAttempts);
 
         if (attempts < maxAttempts) {
-          console.log(`Besucher ${visitor.userId} bewegt von [${currentLng}, ${currentLat}] nach [${newPoint[0]}, ${newPoint[1]}]`);
-          visitor.location = { type: "Point", coordinates: newPoint };
+          console.log(`Besucher ${visitor.userId} bewegt von [${startCoords[0][0]}, ${startCoords[0][1]}] nach [${currentCoords[0]}, ${currentCoords[1]}]`);
+          visitor.location = { type: "Point", coordinates: currentCoords };
           visitor.lastUpdated = new Date();
           await visitor.save();
           updatedCount++;
         } else {
           console.warn(`Kein gültiger Punkt für Besucher ${visitor.userId} gefunden nach ${attempts} Versuchen`);
         }
+
+        // Kontinuierliche Bewegung innerhalb des Polygons
+        const intervalId = setInterval(async () => {
+          let newPoint;
+          attempts = 0;
+          do {
+            newPoint = randomDestinationPoint(currentCoords[1], currentCoords[0], maxDistance);
+            attempts++;
+          } while (!pointInPolygon(newPoint, polygon) && attempts < maxAttempts);
+
+          if (attempts < maxAttempts) {
+            console.log(`Besucher ${visitor.userId} bewegt von [${currentCoords[0]}, ${currentCoords[1]}] nach [${newPoint[0]}, ${newPoint[1]}]`);
+            currentCoords = newPoint;
+            visitor.location = { type: "Point", coordinates: currentCoords };
+            visitor.lastUpdated = new Date();
+            await visitor.save();
+          } else {
+            console.warn(`Kein gültiger Punkt für Besucher ${visitor.userId} gefunden nach ${attempts} Versuchen`);
+          }
+        }, 1000); // Bewegung alle 1 Sekunde
+
+        // Stoppen Sie die Bewegung nach einer bestimmten Zeit (z.B. 5 Minuten)
+        setTimeout(() => clearInterval(intervalId), 5 * 60 * 1000);
       }
 
       console.log(`Bewegung abgeschlossen: ${updatedCount} Besucher aktualisiert.`);

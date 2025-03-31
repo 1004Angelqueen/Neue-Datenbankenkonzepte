@@ -7,6 +7,7 @@ export default async function (fastify, opts) {
 
   fastify.post('/track', async (request, reply) => {
     const { userId, role, latitude, longitude } = request.body;
+    
 
     if (!userId || latitude === undefined || longitude === undefined) {
       return reply.code(400).send({ error: 'Fehlende Daten' });
