@@ -1,1 +1,6 @@
 <div id="map" style="height: 100vh;"></div>
+<button *ngIf="isEventveranstalter()" 
+(click)="exportData()" 
+class="export-button">
+Daten exportieren
+</button>

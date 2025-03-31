@@ -4,12 +4,16 @@ import * as L from 'leaflet';
 import 'leaflet.heat';
 import { WebsocketService } from '../../services/websocket.service';
 import { Subscription, interval } from 'rxjs';
+import { ExportService } from '../../services/export.service';
+import { CommonModule } from '@angular/common';  // CommonModule importieren
 
 @Component({
   standalone: true,
   selector: 'app-heatmap',
   templateUrl: './heatmap.component.html',
-  styleUrls: ['./heatmap.component.css']
+  styleUrls: ['./heatmap.component.css'],
+  imports: [CommonModule]  // CommonModule zu den imports hinzufügen
+
 })
 export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
@@ -22,6 +26,8 @@ export class HeatmapComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private wsService: WebsocketService,
+    private exportService: ExportService
+
   ) {}
 
   ngOnInit(): void {
@@ -334,5 +340,34 @@ private addColoredMarkers(): void {
     if (this.reloadSubscription) {
       this.reloadSubscription.unsubscribe();
     }
+  }
+
+
+
+  isEventveranstalter(): boolean {
+    const role = localStorage.getItem('role');
+    return role?.toLowerCase() === 'eventveranstalter';
+  }
+
+  exportData(): void {
+    // HTTP GET Request an den Server
+    this.http.get('http://localhost:3000/api/export-data')
+      .subscribe((data) => {
+        // Download starten
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        // Dateiname mit aktuellem Datum
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `event-export-${date}.json`;
+        
+        link.href = url;
+        link.click();
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+      });
   }
 }
